@@ -1,0 +1,197 @@
+1. C => E 																# C implies E
+2. A + B + C => D 																# A and B and C implies D
+3. A | B => C 																# A or B implies C
+4. A + !B => F 																# A and not B implies F
+5. C | !G => H 																# C or not G implies H
+6. V ^ W => X 																# V xor W implies X
+7. A + B => Y + Z 																# A and B implies Y and Z
+8. C | D => X | V 																# C or D implies X or V
+9. E + F => !V 																# E and F implies not V
+10. A + B <=> C 																# A and B if and only if C
+11. A + B <=> !C 																# A and B if and only if not C
+
+8.
+	12. !X => V
+	13. !V => X
+7.
+	14.
+	15.
+
+
+=> A + B
+	=> A
+	=> B
+
+X => A | B
+	!B => A
+	!A => B
+
+=> A ^ B
+	!A <=> B
+	!B <=> A
+
+A <=> B
+	A => B
+	B => A
+
+
+=ABG # Initial facts : A, B and G are true. All others are false.
+
+?GVX # Queries : What are G, V and X ?
+
+// class
+Node {
+	Name: String
+	State: Boolean
+	Rules: []
+	Error: Boolean
+	InitialFact: Boolean
+	Queries: Boolean
+}
+
+Rule {
+	Satisfied: Boolean (error?)
+	ExpressionTree:
+	ExpressionString:
+	Result: True/False/undefined
+	Error: Boolean
+}
+
+Expression [Node, Operand, Node, Operand, (, ]
+
+
+Parse File
+- error if
+	- missing Queries
+	- empty files
+	- wrong token
+	- parentheses error
+- ignore comments
+
+Tokens:
+- fact (uppercase letter)
+- => , <=>, +, |, ^, !
+- (, )
+
+initial facts
+
+queries
+
+Store Initial Rules
+Link rules
+	- create intermediary rules (simplification)
+Set initial facts
+Create list of unknowns
+Create list of goals
+
+ALGO SOLVE
+
+Loop over unknowns
+	Loop over unknown rules
+		try to solve rule
+			if rule solved,
+				update rules result + satisfied
+				check for inconsistencies
+
+ALGO CREATE NODES AND RULES
+
+
+listOfNodes = []
+
+dict = {}
+
+// dict['Name'] = Node
+
+Loop over input strings that are rules
+
+
+
+
+
+
+===========================
+
+Subexpression for complex conclusions.
+
+=====
+
+A + B => (C + D) + !(E + F) + (G + !(H ^ I))
+=AB
+?CDEFGHI
+
+A + B => C + D
+	A + B => C
+	A + B => D
+A + B => !(E + F) <=> A + B => !E + !F
+	A + B => !E
+	A + B => !F
+A + B => G + !(H + I)
+	A + B => G
+	A + B => !(H ^ I)
+		A + B + H => I
+		A + B + I => H
+		A + B + !H => !I
+		A + B + !I => !H
+
+=====
+
+A => X | V + C
+C + X | V => B
+=A
+?B
+
+A => X | V
+	A + !X => V
+	A + !V => X
+
+=========================== STRING TO NODE (for dict)
+
+dict = {}
+dict['expr'] = Node
+
+C + (X | V)
+(X | V) + C
+:+C|VX
+
+(C | X) + V
+(X | C) + V
+:+V|CX
+
+X | C
+:|CX
+:C
+:X
+
+V
+:V
+
+A + B + C
++ABC
+
+=========
+
+A | B | C => X
+
+Y => A | B
+
+
+=======
+
+A => B | C ^ D
+C ^ D | B + A => E
+
+=A
+?E
+
+
+C ^ D | B + A
+:+A|B^CD
+	:A
+	:|B^CD
+		:B
+		:^CD
+			:C
+			:D
+
+B | C ^ D
+:|B^CD
