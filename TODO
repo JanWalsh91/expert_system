@@ -40,7 +40,7 @@ A <=> B
 ?GVX # Queries : What are G, V and X ?
 
 // class
-Node {
+Fact {
 	Name: String
 	State: Boolean
 	Rules: []
