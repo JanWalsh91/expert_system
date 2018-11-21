@@ -22,7 +22,7 @@ const Rule = require('./class/Rule')
 // 	lines.forEach(line => {
 // 		// console.log(line)
 // 		line = line.split('#')[0]
-// 		if (line.length == 0) return 
+// 		if (line.length == 0) return
 // 		// console.log(line)
 
 // 		if (line[0] == '=') {
@@ -43,7 +43,7 @@ class Token {
 		function isValidToken(t) {
 			return types.includes(t) || t.match(/^[A-Z]+$/) || t == '!'
 		}
-		
+
 		if (!isValidToken(value)) {
 			throw 'Invalid token' + value
 		}
@@ -64,8 +64,7 @@ class Token {
 
 class Node {
 	constructor(token) {
-		this.left = null
-		this.right = null
+		this.children = []
 		this.value = null
 		this.type = null
 		this.parent = null
@@ -77,12 +76,13 @@ class Node {
 }
 
 
-
 /////////// START ////////////
 
 
 // recieve RULE in string form
-let exp = '() +  =>   A'
+
+let exp = 'A => B'
+// let exp = 'A + E | G => Z'
 
 // remove whitespaces
 exp = exp.replace(/[ \t\v]+/ig, '')
@@ -95,21 +95,30 @@ if (!( ((parts = exp.split('<=>')).length == 2 && (ifAndOnlyIf = true)) || (part
 	console.log(parts.length)
 	return
 }
-console.log('parts: ' + parts)
-console.log('ifAndOnlyIf: ' + ifAndOnlyIf)
+// console.log('parts: ' + parts)
+// console.log('ifAndOnlyIf: ' + ifAndOnlyIf)
 
 let leftTokens = tokenize(parts[0])
 let rightTokens = tokenize(parts[1])
 
-console.log( 'leftTokens: ')
-console.log(leftTokens)
-console.log( 'rightTokens: ' )
-console.log(rightTokens)
+// console.log( 'leftTokens: ')
+// console.log(leftTokens)
+// console.log( 'rightTokens: ' )
+// console.log(rightTokens)
 
-let leftTree = createTree(leftTokens)
+console.log('=== create tree ===');
+let leftTree
 
-console.log('leftTree: ')
-console.log(leftTree)
+try {
+	leftTree = createTree(leftTokens)
+} catch (e) {
+	console.log(e)
+	return
+}
+
+console.log('=== Fuck Tree, the ===');
+
+displayTree(leftTree)
 
 function tokenize(exp) {
 
@@ -118,8 +127,8 @@ function tokenize(exp) {
 		console.log('parenthese error')
 		return
 	}
-	console.log('parentheses OK')
-	
+	// console.log('parentheses OK')
+
 	let tokens = []
 	for (let i = 0; i < exp.length; i++) {
 		try {
@@ -130,7 +139,7 @@ function tokenize(exp) {
 		}
 	}
 	return tokens
-	// 
+	//
 }
 
 function checkParentheses(exp) {
@@ -149,96 +158,255 @@ function checkParentheses(exp) {
 	return depth == 0
 }
 
+function displayTree(node, depth) {
+	if (depth === undefined) depth = 0
+
+	for (let i = 0; i < depth; i++) {
+		process.stdout.write("  ");
+	}
+	console.log(node.value);
+	node.children.forEach(child => {
+		displayTree(child, depth + 1)
+	})
+}
+
+function isTreeValid(node) {
+	if (node.type == 'OPERATOR') {
+		if (node.children.length != 2) {
+			return false
+		}
+	} else if (node.type == 'NOT') {
+		if (node.children.length != 1) {
+			return false
+		}
+	} else if (node.type == 'OPERAND') {
+		if (node.children.length > 0) {
+			return false
+		}
+	}
+
+	node.children.forEach(child => {
+		if (!isTreeValid(child)) {
+			return false
+		}
+	})
+
+	return true
+}
+
+function removeEmptyNodes(node) {
+	if (node.value == null) {
+		console.log('remove node ' + node.value);
+		if (node.children.length > 0) {
+			node.children.forEach(child => {
+				node.parent.children.push(child)
+				child.parent = node.parent
+			})
+		}
+		node.parent.children = node.parent.children.splice(node.parent.children.indexOf(node), 1)
+	}
+
+	node.children.forEach(child => {
+		if (!removeEmptyNodes(child)) {
+			return false
+		}
+	})
+
+	return true
+}
+
+
+/*
+ * Returns true if a <= b, if a and b is the right order
+ * Order: [A-Z][!A-!Z]+|^!
+ */
+function compareNodes(a, b) {
+		if (a == null || b == null) throw 'need two nodes to compare'
+
+		function getNodeValue(node) {
+			const op = ['+', '|', '^', '!']
+
+			if (node.type == 'OPERAND') {
+				if (node.value[0] == '!') {
+					return node.value.charCodeAt(node.value.length - 1) + 26
+				} else {
+					return node.value.charCodeAt(node.value.length - 1)
+				}
+			}
+			if (node.type == 'OPERATOR' || node.type == 'NOT') {
+				return 'A'.charCodeAt(0) + op.indexOf(node.value) + 26 * 2
+			}
+		}
+
+		console.log(`a: ${getNodeValue(a)}, b: ${getNodeValue(b)}`);
+
+		return getNodeValue(a) <= getNodeValue(b)
+}
+
+function orderNodes(node) {
+	if (node.right == null && node.left == null) {
+		return
+	}
+	if (node.right != null && node.left == null) {
+		node.left = node.right
+		node.right = null
+		orderNodes(node.left)
+		return
+	}
+	if (node.right != null && node.left != null) {
+		if (!compareNodes(node.left, node.right)) {
+			node.left = node.right
+			node.right = tmp
+		} else {
+
+		}
+	}
+
+}
+
+// let a = compareNodes({type: 'OPERAND', value: 'A'}, {type: 'OPERAND', value: 'A'})
+// console.log(a);
+// let b = compareNodes({type: 'OPERAND', value: 'D'}, {type: 'OPERAND', value: '!D'})
+// console.log(b);
 
 function createTree(tokens) {
 
-	const op = ['+', '|', '^']
+	const op = {
+		'+': 1,
+		'|': 1,
+		'^': 2
+	}
 
 	// on start, new node
 	let root = new Node()
 	let currentNode = root
 
 	for (let i = 0; i < tokens.length; i++) {
-		switch (tokens.type) {
+		console.log('parsing: ' + tokens[i].value + '  currentNode.value: ' + currentNode.value);
+		switch (tokens[i].type) {
 			case 'OPEN_PARENTHESES':
-				// TODO: try to place left, then right
-				currentNode.left = new Node()
-				currentNode.left.parent = currentNode
-				currentNode = currentNode.left
-				break;
+				let node = new Node()
+				currentNode.children.push(node)
+				node.parent = currentNode
+				currentNode = node
+				break
 			case 'CLOSE_PARENTHESES':
-				if (currentNode.parent == null) throw 'Close_Parenthesis ErROr'
+				if (currentNode.parent == null) throw 'Close_Parenthesis ErR0r'
 				currentNode = currentNode.parent
-				break;
+				break
 			case 'OPERAND':
-				if (currentNode.type == null || currentNode.type == 'OPERATOR') {
-					if (currentNode.left == null) {
-						currentNode.left = new Node(tokens[i])
-						currentNode.left.parent = currentNode
-					} else if (token[i].type != 'NOT') {
-						currentNode.right = new Node(tokens[i])
-						currentNode.right.parent = currentNode
-					} else {
-						throw "Operand Error"
-					}
+				console.log('found operand');
+				if (i > 0 && !(tokens[i - 1].value.match(/^[A-Z]+$/) || tokens[i - 1].value == '!')) {
+					throw 'operand error'
 				}
-				break;
+				if (currentNode.type == null || currentNode.type == 'OPERATOR') {
+					let node = new Node(tokens[i])
+					currentNode.children.push(node)
+					node.parent = currentNode
+				}
+				break
 			case 'OPERATOR':
+				console.log('found operator');
 				if (currentNode.type == null) {
 					currentNode.type = tokens[i].type
 					currentNode.value = tokens[i].value
+					break
 				}
 				if (currentNode.type == 'OPERATOR') {
-					if (op.indexOf(tokens[i].value) >= op.indexOf(currentNode.value)) {
-						if (currentNode.right == null) {
+					// if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
+					// 	throw 'Ambiguous Error'
+					// }
+
+					if (tokens[i].value == currentNode.value) {
+						break
+					}
+
+					if (op[tokens[i].value] > op[currentNode.value]) {
+						console.log(tokens[i].value + " > " + currentNode.value);
+						if (currentNode.children.length < 2) {
 							throw 'Operator Error'
 						}
-						let a = currentNode.right
-						currentNode.right = new Node(tokens[i])
-						currentNode.right.parent = currentNode
-						currentNode.right.left = a
-						currentNode = currentNode.right
+						let a = currentNode.children[currentNode.length - 1]
+						let node = new Node(tokens[i])
+						currentNode.childen.push(node)
+						node.parent = currentNode
+						node.children.push(a)
+						currentNode.children.splice(currentNode.children.indexOf(a), 1)
+						currentNode = node
 					} else {
-						while (op.indexOf(tokens[i].value) < op.indexOf(currentNode.value)) {
+						console.log(tokens[i].value + " <= " + currentNode.value)
+						// if (currentNode.)
+						while (op[tokens[i].value] <= op[currentNode.value] && currentNode.parent != null) {
+							// console.log('going up. currentNode.value: ' + currentNode.value);
 							currentNode = currentNode.parent
+							// console.log('going up. currentNode.value: ' + currentNode.value);
 						}
-						let a = currentNode.right
-						let b = new Node(tokens[i])
-						currentNode.right = b
-						b.parent = currentNode
-						b.left = a
-						a.parent = b
-						currentNode = b
+
+						if (currentNode.value == null) {
+							currentNode.type = tokens[i].type
+							currentNode.value = tokens[i].value
+							break
+						}
+
+						if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
+							throw 'Ambiguous Error'
+						}
+
+						if (currentNode.value == tokens[i].value) {
+							break
+						}
+
+						if (currentNode.parent == null) {
+							// console.log('------ 1 ------');
+							// console.log(currentNode);
+							let node = new Node(tokens[i])
+							node.children.push(currentNode)
+							currentNode.parent = node
+							root = node
+							currentNode = node
+							break
+						}
+						// console.log('------ 2 ------');
+
+						let a = currentNode.children[currentNode.length - 1]
+						let node = new Node(tokens[i])
+						currentNode.childen.push(node)
+						node.parent = currentNode
+						node.children.push(a)
+						currentNode.children.splice(currentNode.children.indexOf(a), 1)
+						currentNode = node
 						// currentNode.right.left = currentNode
 					}
+				} else if (currentNode.type == 'NOT') {
+					if (currentNode.left == null) {
+						throw 'Not (!) Error currentNode.left == null'
+					}
+					// currentNode.
 				}
 				break;
 			case 'NOT':
 				if (i + 1 >= tokens.length) throw 'Not Error'
 				if (tokens[i + 1].type == 'OPERAND') {
 					if (currentNode.type == null || currentNode.type == 'OPERATOR') {
-						if (currentNode.left == null) {
-							currentNode.left = new Node(tokens[i + 1])
-							currentNode.left.parent = currentNode
-						} else if (token[i].type != 'NOT') {
-							currentNode.right = new Node(tokens[i + 1])
-							currentNode.right.parent = currentNode
-						} else {
-							throw "Operand Error"
-						}
+						let node = new Node(tokens[i + 1])
+						currentNode.children.push(node)
+						node.parent = currentNode
 					}
 				}
 				else if (tokens[i + 1].type == 'OPEN_PARENTHESES') {
-					// TODO: try to place left, then right
-
-					currentNode.left = new Node()
-					currentNode.left.parent = currentNode
-					currentNode = currentNode.left
-
-					
+					if (currentNode.children.length == 0) {
+						let node = new Node(tokens[i + 1])
+						currentNode.children.push(node)
+						node.parent = currentNode
+						currentNode = node
+					}
+				} else {
+					throw 'error 109'
 				}
+				i++
 				break;
 		}
+		displayTree(root)
 	}
 
 	{
@@ -254,9 +422,9 @@ function createTree(tokens) {
 		// node.left = new node(OPERAND)
 		// else if operator is !NOT
 		// node.right = new node(OPERAND)
-		// else 
+		// else
 		// error
-		// else 
+		// else
 		// error
 		// if OPERATOR
 		// if node.type == null
@@ -268,7 +436,7 @@ function createTree(tokens) {
 		// save A = right node
 		// set node.right to new node(operator)
 		// set node.right.left to A
-		// set current node to new node 
+		// set current node to new node
 		// if new token.priority < currentnode.priority
 		// while token.priority > currentnode.priority // handle error
 		// currentNode = currentNode.parent
@@ -284,16 +452,32 @@ function createTree(tokens) {
 				// treat as operand, but add ! to operand
 			// if next token.type == OPEN_PARENTHESES
 				// treat as operator with right always null]
-			// else 
+			// else
 				// error
 
 	// if currentNode.right == null
 		// error
 
-	// after all tokens added, check order of operands and operators for each node and switch
 
+	// while root is empty, root = root.left
+	while (root.value == null) {
+		console.log('removing empty node')
+		if (root.left == null || root.right != null) {
+			throw 'Removing empty nodes error'
+		}
+		root = root.left
+		root.parent = null
+	}
 
+	removeEmptyNodes(root)
 
+	if (!isTreeValid(root)) {
+		throw 'Invalid Tree'
+	}
+
+	// TODO: after all tokens added, check order of operands and operators for each node and series of nodes of same operator and switch
+
+	// orderNodes(root)
 
 	return root
 }
