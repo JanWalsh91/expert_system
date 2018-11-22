@@ -81,7 +81,8 @@ class Node {
 
 // recieve RULE in string form
 
-let exp = 'A => B'
+let exp = '!A | !(!(B ^ B + !C + F + !(D | E | (H ^ L| X ^ Y)))) | !A | !(!(B ^ B + !C + F + !(D | E | (H ^ L| X ^ Y)))) => Z'
+// let exp = '!(A + B) ^ C => Z'
 // let exp = 'A + E | G => Z'
 
 // remove whitespaces
@@ -172,7 +173,7 @@ function displayTree(node, depth) {
 
 function isTreeValid(node) {
 	if (node.type == 'OPERATOR') {
-		if (node.children.length != 2) {
+		if (node.children.length < 2) {
 			return false
 		}
 	} else if (node.type == 'NOT') {
@@ -195,24 +196,70 @@ function isTreeValid(node) {
 }
 
 function removeEmptyNodes(node) {
+	// console.log('removeEmptyNodes: ' + node.value);
 	if (node.value == null) {
-		console.log('remove node ' + node.value);
+		// console.log('remove node ' + node.value);
 		if (node.children.length > 0) {
 			node.children.forEach(child => {
-				node.parent.children.push(child)
+				node.parent.children.unshift(child)
 				child.parent = node.parent
 			})
 		}
-		node.parent.children = node.parent.children.splice(node.parent.children.indexOf(node), 1)
+		node.parent.children.splice(node.parent.children.indexOf(node), 1)
+	}
+	// console.log(node.children);
+	for (let i = 0; i < node.children.length; i++) {
+		// console.log('removeEmptyNodes node.value: ' + node.value + ' child: ' + i + ' of value ' + node.children[i].value);
+		// displayTree(node)
+		removeEmptyNodes(node.children[i])
 	}
 
-	node.children.forEach(child => {
-		if (!removeEmptyNodes(child)) {
-			return false
+	return true
+}
+
+function simplifyOperators(node) {
+
+	if (node.type == 'OPERATOR' && node.value != '^') {
+		let childrenToMove = []
+		let childrenToRemove = []
+		node.children.forEach(child => {
+			if (child.value == node.value) {
+				child.children.forEach(subchild => {
+					subchild.parent = node
+					childrenToMove.push(subchild)
+				})
+				childrenToRemove.push(child)
+			}
+		})
+
+		console.log(`childrenToRemove:`);
+		console.log(childrenToRemove);
+
+		childrenToRemove.forEach(child => {
+			displayTree(node)
+
+			node.children.splice(node.children.indexOf(child), 1)
+
+			displayTree(node)
+		})
+
+		// console.log('1111');
+ 		// displayTree(node)
+		// console.log('2222');
+		node.children.push(...childrenToMove)
+
+		if (childrenToMove.length > 0) {
+			simplifyOperators(node)
 		}
+	}
+
+	// console.log("===========");
+	// displayTree(node)
+
+	node.children.forEach(child => {
+		simplifyOperators(child)
 	})
 
-	return true
 }
 
 
@@ -282,26 +329,64 @@ function createTree(tokens) {
 	let currentNode = root
 
 	for (let i = 0; i < tokens.length; i++) {
-		console.log('parsing: ' + tokens[i].value + '  currentNode.value: ' + currentNode.value);
+		console.log('\x1b[31m%s\x1b[0m', 'parsing: ' + tokens[i].value);
+		console.log('currentNode.value: ' + currentNode.value);
 		switch (tokens[i].type) {
 			case 'OPEN_PARENTHESES':
-				let node = new Node()
+				console.log('found open parentheses');
+				let node = new Node(tokens[i])
 				currentNode.children.push(node)
 				node.parent = currentNode
-				currentNode = node
+				let emptyNode = new Node()
+				node.children.push(emptyNode)
+				emptyNode.parent = node
+				currentNode = emptyNode
 				break
 			case 'CLOSE_PARENTHESES':
+				console.log('found close parentheses');
+				// console.log(currentNode);
+				while (currentNode.type != 'OPEN_PARENTHESES' && currentNode.parent != null) {
+					currentNode = currentNode.parent
+				}
+
 				if (currentNode.parent == null) throw 'Close_Parenthesis ErR0r'
 				currentNode = currentNode.parent
+
+
+				let parentheses = currentNode.children[currentNode.children.length - 1]
+				currentNode.children.push(parentheses.children[0])
+				parentheses.children[0].parent = currentNode
+				currentNode.children.splice(currentNode.children.indexOf(parentheses), 1)
+				// console.log('currentNode: ');
+				// console.log(currentNode);
+
+				if (currentNode.type == 'NOT' && currentNode.parent != null) {
+					currentNode = currentNode.parent
+				} else if (currentNode.type == 'NOT' && currentNode.parent == null) {
+					throw 'Not has no parent'
+				}
+
 				break
 			case 'OPERAND':
 				console.log('found operand');
-				if (i > 0 && !(tokens[i - 1].value.match(/^[A-Z]+$/) || tokens[i - 1].value == '!')) {
+				// console.log('found operand: ' + tokens[i].value + '   tokens[i - 1].value: ' + (i > 0 ? tokens[i - 1].value : 0));
+				// if (i > 0) {
+				// 	console.log(!tokens[i - 1].value.match(/^[A-Z]+$/));
+				// }
+
+				// TODO: Attirer la colère de Zeus
+				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/) || tokens[i - 1].value == '!')) {
 					throw 'operand error'
 				}
 				if (currentNode.type == null || currentNode.type == 'OPERATOR') {
+					// console.log('test, currentnode: ');
+					// console.log(currentNode);
 					let node = new Node(tokens[i])
+					// console.log('new node: ' + node.value);
+					// console.log(currentNode.children);
+
 					currentNode.children.push(node)
+					// console.log(currentNode.children);
 					node.parent = currentNode
 				}
 				break
@@ -326,19 +411,25 @@ function createTree(tokens) {
 						if (currentNode.children.length < 2) {
 							throw 'Operator Error'
 						}
-						let a = currentNode.children[currentNode.length - 1]
+						let a = currentNode.children[currentNode.children.length - 1]
 						let node = new Node(tokens[i])
-						currentNode.childen.push(node)
+						currentNode.children.push(node)
 						node.parent = currentNode
 						node.children.push(a)
 						currentNode.children.splice(currentNode.children.indexOf(a), 1)
 						currentNode = node
 					} else {
 						console.log(tokens[i].value + " <= " + currentNode.value)
-						// if (currentNode.)
-						while (op[tokens[i].value] <= op[currentNode.value] && currentNode.parent != null) {
-							// console.log('going up. currentNode.value: ' + currentNode.value);
+
+						while (op[tokens[i].value] <= op[currentNode.value] && currentNode.parent != null && currentNode.type != 'OPEN_PARENTHESES') {
+
+							if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
+								throw 'Ambiguous Error'
+							}
+
+							console.log('going up. currentNode.value: ' + currentNode.value);
 							currentNode = currentNode.parent
+							console.log('went up. currentNode.value: ' + currentNode.value);
 							// console.log('going up. currentNode.value: ' + currentNode.value);
 						}
 
@@ -368,9 +459,13 @@ function createTree(tokens) {
 						}
 						// console.log('------ 2 ------');
 
-						let a = currentNode.children[currentNode.length - 1]
+						// console.log(currentNode);
+
+						let a = currentNode.children[currentNode.children.length - 1]
+						// console.log('a: ' + a.value);
 						let node = new Node(tokens[i])
-						currentNode.childen.push(node)
+						currentNode.children.push(node)
+						// console.log('currentNode.children: ' + currentNode.children);
 						node.parent = currentNode
 						node.children.push(a)
 						currentNode.children.splice(currentNode.children.indexOf(a), 1)
@@ -378,10 +473,10 @@ function createTree(tokens) {
 						// currentNode.right.left = currentNode
 					}
 				} else if (currentNode.type == 'NOT') {
+					// TODO: PANHANDLE
 					if (currentNode.left == null) {
 						throw 'Not (!) Error currentNode.left == null'
 					}
-					// currentNode.
 				}
 				break;
 			case 'NOT':
@@ -389,21 +484,22 @@ function createTree(tokens) {
 				if (tokens[i + 1].type == 'OPERAND') {
 					if (currentNode.type == null || currentNode.type == 'OPERATOR') {
 						let node = new Node(tokens[i + 1])
+						node.value = '!' + node.value
 						currentNode.children.push(node)
 						node.parent = currentNode
 					}
+					i++
 				}
 				else if (tokens[i + 1].type == 'OPEN_PARENTHESES') {
-					if (currentNode.children.length == 0) {
-						let node = new Node(tokens[i + 1])
+					// if (currentNode.children.length == 0) {
+						let node = new Node(tokens[i])
 						currentNode.children.push(node)
 						node.parent = currentNode
 						currentNode = node
-					}
+					// }
 				} else {
 					throw 'error 109'
 				}
-				i++
 				break;
 		}
 		displayTree(root)
@@ -462,14 +558,16 @@ function createTree(tokens) {
 	// while root is empty, root = root.left
 	while (root.value == null) {
 		console.log('removing empty node')
-		if (root.left == null || root.right != null) {
+		if (root.children.length > 1) {
 			throw 'Removing empty nodes error'
 		}
-		root = root.left
+		root = root.children[0]
 		root.parent = null
 	}
 
 	removeEmptyNodes(root)
+
+	simplifyOperators(root)
 
 	if (!isTreeValid(root)) {
 		throw 'Invalid Tree'
