@@ -24,7 +24,7 @@ function displayTree(node, depth) {
 	for (let i = 0; i < depth; i++) {
 		process.stdout.write("  ");
 	}
-	console.log(node.value);
+	console.log(node.value + ' : '+ node.key);
 	node.children.forEach(child => {
 		displayTree(child, depth + 1)
 	})
@@ -315,6 +315,15 @@ function createTree(tokens) {
 	return root
 }
 
+function createKeyFromNode(node) {
+	let key = ''
+	key += node.value
+	node.children.forEach(child => {
+		key += createKeyFromNode(child)
+	})
+	return key
+}
+
 const syntaxTree = {
 
 	displayTree: root => {
@@ -325,6 +334,13 @@ const syntaxTree = {
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
 		return tree
+	},
+
+	assignKeysToNodes: node => {
+		node.key = createKeyFromNode(node)
+		node.children.forEach(child => {
+			syntaxTree.assignKeysToNodes(child)
+		})
 	}
 }
 

@@ -1,8 +1,10 @@
 const fs = require('fs')
 const Rule = require('./classes/Rule')
+const Fact = require('./classes/Fact')
 
 // data
 const rules = require('./rules')
+const facts = require('./facts')
 
 // services
 const syntaxTree = require('./services/syntaxTree')
@@ -22,9 +24,21 @@ if (fileName) {
 		if (line.length == 0) return
 
 		if (line[0] == '=') {
-			// create fact
+			for (let i = 1; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (!key.match(/^[A-Z]+$/)) {
+					throw 'Invalid initial fact'
+				}
+				facts[key] = new Fact({key: key, state: true})
+			}
 		} else if (line[0] == '?') {
-			// set queries
+			for (let i = 1; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (!key.match(/^[A-Z]+$/)) {
+					throw 'Invalid query'
+				}
+				facts[key] = new Fact({key: key, query: true})
+			}
 		} else if (line.includes('=>')){
 
 			let ret = Rule.createFromString(line)
@@ -37,7 +51,12 @@ if (fileName) {
 	})
 
 	rules.forEach(rule => {
+		// console.log('tree');
 		syntaxTree.displayTree(rule.conditionsTree)
-		syntaxTree.displayTree(rule.conclusionTree)
+		// syntaxTree.displayTree(rule.conclusionTree)
+		// Fact.createKeysFromNode(rule.conclusionTree)
 	})
+
+	console.log(facts);
+
 }

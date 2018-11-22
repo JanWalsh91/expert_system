@@ -1,14 +1,13 @@
+// const Rules = require('./Rules')
+
 class Fact {
 	constructor(params) {
 		params = params || {}
 		let defaultParams = {
 			expression: '',
-			rpn: '',
+			key: '',
 			state: undefined, // true, false, undefined
-			rules: {
-				conditions: [],		// rule including this as part of condition
-				conclusions: [],	// rule having this as conclusion
-			},
+			rules: [],
 			error: false,
 			query: false
 		}
@@ -23,9 +22,7 @@ class Fact {
 
 	}
 
-	static toRPN(infix) {
-		
-	}
+
 
 }
 

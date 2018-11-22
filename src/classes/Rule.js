@@ -48,12 +48,32 @@ class Rule {
 		}
 
 		if (!ifAndOnlyIf) {
-		 	return new Rule({conditionsTree: leftTree, conclusionTree: rightTree})
+			let rule = new Rule({conditionsTree: leftTree, conclusionTree: rightTree})
+
+			// validate rule
+
+
+			// create keys
+
+			syntaxTree.assignKeysToNodes(rule.conditionsTree)
+			syntaxTree.assignKeysToNodes(rule.conclusionTree)
+
+		 	return rule
 		} else {
-			return [
-				new Rule({conditionsTree: leftTree, conclusionTree: rightTree}),
-				new Rule({conditionsTree: rightTree, conclusionTree: leftTree})
-			]
+			let rules = []
+
+			rules.push(new Rule({conditionsTree: leftTree, conclusionTree: rightTree}))
+			rules.push(new Rule({conditionsTree: rightTree, conclusionTree: leftTree}))
+
+			// validate
+
+			// create keys
+			rules.forEach(rule => {
+				syntaxTree.assignKeysToNodes(rule.conditionsTree)
+				syntaxTree.assignKeysToNodes(rule.conclusionTree)
+			})
+
+			return rules
 		}
 
 	}
