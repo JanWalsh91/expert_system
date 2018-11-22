@@ -341,6 +341,10 @@ const syntaxTree = {
 		node.children.forEach(child => {
 			syntaxTree.assignKeysToNodes(child)
 		})
+	},
+
+	createKeyFromNode: node => {
+		return createKeyFromNode(node)
 	}
 }
 

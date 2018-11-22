@@ -9,8 +9,6 @@ const facts = require('./facts')
 // services
 const syntaxTree = require('./services/syntaxTree')
 
-
-
 const fileName = process.argv[2]
 if (fileName) {
 	let contents = fs.readFileSync(fileName, 'utf8');
@@ -29,7 +27,9 @@ if (fileName) {
 				if (!key.match(/^[A-Z]+$/)) {
 					throw 'Invalid initial fact'
 				}
-				facts[key] = new Fact({key: key, state: true})
+				if (facts[key] == undefined) {
+					facts[key] = new Fact({key: key, state: true})
+				}
 			}
 		} else if (line[0] == '?') {
 			for (let i = 1; i < line.length; i++) {
@@ -37,7 +37,11 @@ if (fileName) {
 				if (!key.match(/^[A-Z]+$/)) {
 					throw 'Invalid query'
 				}
-				facts[key] = new Fact({key: key, query: true})
+				if (facts[key] == undefined) {
+					facts[key] = new Fact({key: key, query: true})
+				} else {
+					facts[key].query = true
+				}
 			}
 		} else if (line.includes('=>')){
 
@@ -51,11 +55,25 @@ if (fileName) {
 	})
 
 	rules.forEach(rule => {
-		// console.log('tree');
+		console.log('== RULE ==');
+		console.log('\t condition');
 		syntaxTree.displayTree(rule.conditionsTree)
-		// syntaxTree.displayTree(rule.conclusionTree)
-		// Fact.createKeysFromNode(rule.conclusionTree)
+		console.log('\t conclusion');
+		syntaxTree.displayTree(rule.conclusionTree)
+
+		let key = syntaxTree.createKeyFromNode(rule.conclusionTree)
+
+		if (facts[key] == undefined) {
+			facts[key] = new Fact({key: key, rules: [rule]})
+		} else {
+			facts[key].rules.push(rule)
+		}
 	})
+
+	// TODO: create subrules (A => B + C ===> A => B & A => C)
+
+	// TODO: add false facts to facts
+	// facts which are not in the dictionary
 
 	console.log(facts);
 
