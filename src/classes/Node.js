@@ -1,3 +1,5 @@
+const facts = require('../facts')
+
 class Node {
 	constructor(token) {
 		this.children = []
@@ -16,6 +18,36 @@ class Node {
 		let newNode =  new Node({value: node.value, type: node.type})
 		newNode.key = node.key
 		return newNode
+	}
+
+	evaluate() {
+		if (facts[this.key].state != undefined) {
+			return facts[this.key].state
+		}
+		switch (this.type) {
+			case 'OPERATOR':
+				switch (this.value) {
+					case '+':
+						break
+					case '|':
+						break
+					case '^':
+						break
+				}
+				break
+			case 'OPERAND':
+				if (this.value[0] == '!') {
+
+				} else {
+					return facts[this.key].resolve
+				}
+				break
+			case 'NOT':
+				break
+			default:
+				throw 'damn hoe! guuuuurl wtf!?'
+				break
+		}
 	}
 }
 

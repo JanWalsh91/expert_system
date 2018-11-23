@@ -1,5 +1,3 @@
-// const Rules = require('./Rules')
-
 class Fact {
 	constructor(params) {
 		params = params || {}
@@ -18,12 +16,20 @@ class Fact {
 		Object.assign(this, params)
 	}
 
-	parseFact(line) {
-
+	resolve() {
+		let results = rules.map(rule => rule.resolve())
+		if (results.length == 0) {
+			this.state == undefined
+			this.error = false
+		} else if (results.every(result => result == results[0])) {
+			this.state = result[0]
+			this.error = false
+		} else {
+			this.state = undefined
+			this.error = 'conflicting rules'
+		}
+		return this.state
 	}
-
-
-
 }
 
 module.exports = Fact

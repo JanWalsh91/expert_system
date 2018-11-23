@@ -98,7 +98,8 @@ if (fileName) {
 	console.log('=== FACTS ===');
 	// console.log(facts);
 	for (let fact in facts) {
-		console.log(fact + ': ' + facts[fact].state)
+		console.log(fact + ': ')
+		// console.log(facts[fact].rules)
 	}
 	console.log('=== RULES ===');
 	rules.forEach(rule => rule.display())

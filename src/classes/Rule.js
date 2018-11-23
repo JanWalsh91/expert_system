@@ -67,6 +67,9 @@ class Rule {
 		console.log(`Rule: ${this.conditionsTree.key} => ${this.conclusionTree.key}`);
 	}
 
+	resolve() {
+		return this.conditionsTree.resolve()
+	}
 
 }
 
