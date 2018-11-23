@@ -33,23 +33,24 @@ function displayTree(node, depth) {
 function isTreeValid(node) {
 	if (node.type == 'OPERATOR') {
 		if (node.children.length < 2) {
-			return false
+			throw `node ${node.value} requries at least 2 children`
+		}
+		if (node.value == '^' && node.children.length != 2) {
+			throw `node ${node.value} requries exactly 2 children`
 		}
 	} else if (node.type == 'NOT') {
 		if (node.children.length != 1) {
-			return false
+			throw `node ${node.value} requries exactly 1 child`
+		}
+		if (node.children[0].type == 'NOT') {
+			throw 'cannot have two NOTs in a row'
 		}
 	} else if (node.type == 'OPERAND') {
 		if (node.children.length > 0) {
-			return false
+			throw `node ${node.value} cannot have children`
 		}
 	}
-	node.children.forEach(child => {
-		if (!isTreeValid(child)) {
-			return false
-		}
-	})
-	return true
+	node.children.forEach(child => isTreeValid(child))
 }
 
 function removeEmptyNodes(node) {
@@ -95,13 +96,9 @@ function simplifyOperators(node) {
 }
 
 /*
- * Returns true if a <= b, if a and b is the right order
  * Order: [A-Z][!A-!Z]+|^!
  */
-// TODO:
-function compareNodes(a, b) {
-		if (a == null || b == null) throw 'need two nodes to compare'
-
+function nodesOrdered(a, b) {
 		function getNodeValue(node) {
 			const op = ['+', '|', '^', '!']
 
@@ -113,34 +110,15 @@ function compareNodes(a, b) {
 				}
 			}
 			if (node.type == 'OPERATOR' || node.type == 'NOT') {
-				return 'A'.charCodeAt(0) + op.indexOf(node.value) + 26 * 2
+				return 'A'.charCodeAt(0) + op.indexOf(node.value) + 1 + 26 * 2
 			}
 		}
-		// console.log(`a: ${getNodeValue(a)}, b: ${getNodeValue(b)}`);
-
-		return getNodeValue(a) <= getNodeValue(b)
+		return getNodeValue(a) - getNodeValue(b)
 }
 
-// TODO:
-function orderNodes(node) {
-	if (node.right == null && node.left == null) {
-		return
-	}
-	if (node.right != null && node.left == null) {
-		node.left = node.right
-		node.right = null
-		orderNodes(node.left)
-		return
-	}
-	if (node.right != null && node.left != null) {
-		if (!compareNodes(node.left, node.right)) {
-			node.left = node.right
-			node.right = tmp
-		} else {
-
-		}
-	}
-
+function orderNode(node) {
+	node.children.sort(nodesOrdered)
+	node.children.forEach(child => orderNode(child))
 }
 
 function tokenize(exp) {
@@ -305,13 +283,8 @@ function createTree(tokens) {
 
 	simplifyOperators(root)
 
-	if (!isTreeValid(root)) {
-		throw 'Invalid Tree'
-	}
+	isTreeValid(root)
 
-	// TODO: after all tokens added, check order of operands and operators for each node and series of nodes of same operator and switch
-
-	// orderNodes(root)
 	return root
 }
 
@@ -324,6 +297,29 @@ function createKeyFromNode(node) {
 	return key
 }
 
+function duplicateNode(node) {
+	let newNode = Node.duplicate(node)
+	let newChildren = node.children.map(child => duplicateNode(child))
+	newNode.children = newChildren
+	newChildren.forEach(child => child.parent = newNode)
+	return newNode
+}
+
+function negateNode(node) {
+	node = duplicateNode(node)
+	if (node.type == 'OPERAND' && node.value.charAt(0) == '!') {
+		node.value = node.value.charAt(1)
+	} else if (node.type == 'OPERAND') {
+		node.value = '!' + node.value.charAt(0)
+	} else if (node.type == 'OPERATOR') {
+		let notNode = new Node({value: '!', type: 'NOT'})
+		node.parent = notNode
+		notNode.children.push(node)
+		node = notNode
+	}
+	return node
+}
+
 const syntaxTree = {
 
 	displayTree: root => {
@@ -333,6 +329,8 @@ const syntaxTree = {
 	createTree: string => {
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
+		orderNode(tree)
+		syntaxTree.displayTree(tree)
 		return tree
 	},
 
@@ -343,9 +341,11 @@ const syntaxTree = {
 		})
 	},
 
-	createKeyFromNode: node => {
-		return createKeyFromNode(node)
-	}
+	createKeyFromNode,
+
+	duplicateNode,
+
+	negateNode
 }
 
 module.exports = syntaxTree

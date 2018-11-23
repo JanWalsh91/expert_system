@@ -43,20 +43,14 @@ class Rule {
 			leftTree = syntaxTree.createTree(parts[0])
 			rightTree = syntaxTree.createTree(parts[1])
 		} catch (e) {
-			console.log(e)
+			console.log('ERROR: ' + e)
 			return
 		}
 
 		if (!ifAndOnlyIf) {
 			let rule = new Rule({conditionsTree: leftTree, conclusionTree: rightTree})
 
-			// validate rule
-
-
-			// create keys
-
-			syntaxTree.assignKeysToNodes(rule.conditionsTree)
-			syntaxTree.assignKeysToNodes(rule.conclusionTree)
+	
 
 		 	return rule
 		} else {
@@ -67,11 +61,7 @@ class Rule {
 
 			// validate
 
-			// create keys
-			rules.forEach(rule => {
-				syntaxTree.assignKeysToNodes(rule.conditionsTree)
-				syntaxTree.assignKeysToNodes(rule.conclusionTree)
-			})
+
 
 			return rules
 		}
