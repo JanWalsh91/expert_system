@@ -12,11 +12,22 @@ const syntaxTree = require('./services/syntaxTree')
 
 const fileName = process.argv[2]
 if (fileName) {
-	let contents = fs.readFileSync(fileName, 'utf8');
+	let contents;
+	try {
+		contents = fs.readFileSync(fileName, 'utf8');
+	} catch(e) {
+		console.log(e)
+		return
+	}
 
 	contents = contents.replace(/[ \t\v]+/ig, '');
 
 	let lines = contents.split(/\r?\n/)
+
+	let factSymbols = []
+	let conclusionFactSymbols = []
+	let trueFactSymbols = []
+	let queryFactSymbols = []
 
 	lines.forEach(line => {
 		line = line.split('#')[0]
@@ -28,6 +39,7 @@ if (fileName) {
 				if (!key.match(/^[A-Z]+$/)) {
 					throw 'Invalid initial fact'
 				}
+				trueFactSymbols.push(key)
 				if (facts[key] == undefined) {
 					facts[key] = new Fact({key: key, state: true})
 				}
@@ -38,6 +50,7 @@ if (fileName) {
 				if (!key.match(/^[A-Z]+$/)) {
 					throw 'Invalid query'
 				}
+				queryFactSymbols.push(key)
 				if (facts[key] == undefined) {
 					facts[key] = new Fact({key: key, query: true})
 				} else {
@@ -45,7 +58,17 @@ if (fileName) {
 				}
 			}
 		} else if (line.includes('=>')){
-
+			let right = false
+			for (let i = 0; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (key.match(/^[A-Z]+$/)) {
+						factSymbols.push(key)
+						if (right) {
+							conclusionFactSymbols.push(key)
+						}
+				}
+				if (key == '=') right = true
+			}
 			let ret = Rule.createFromString(line)
 			if (ret instanceof Array) {
 				rules.push(...ret)
@@ -70,13 +93,37 @@ if (fileName) {
 	// TODO: add false facts to facts
 	// facts which are not in the dictionary
 
+	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+
 	console.log('=== FACTS ===');
-	console.log(facts);
-	// console.log(rules);
+	// console.log(facts);
+	for (let fact in facts) {
+		console.log(fact + ': ' + facts[fact].state)
+	}
+	console.log('=== RULES ===');
+	rules.forEach(rule => rule.display())
 
 }
 
+function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
+	let falseFactSymbols = factSymbols.filter(el => {
+		return !conclusionFactSymbols.includes(el) && !trueFactSymbols.includes(el) && !queryFactSymbols.includes(el)
+	})
+
+	console.log(falseFactSymbols);
+
+	falseFactSymbols.forEach(key => {
+		facts[key] = (new Fact({key, state: false}))
+	})
+}
+
 function createSubrules(conditionsTree, conclusionTree) {
+
+	function simplifyTrees(rule) {
+		syntaxTree.simplifyOperators(rule.conditionsTree)
+		syntaxTree.simplifyOperators(rule.conclusionTree)
+	}
+
 	if (conclusionTree.type == 'OPERATOR') {
 		if (conclusionTree.value == '+') {
 			conclusionTree.children.forEach(child => {
@@ -84,6 +131,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
 					conclusionTree: syntaxTree.duplicateNode(child)
 				})
+				simplifyTrees(rule)
 				rules.push(rule)
 				createSubrules(rule.conditionsTree, rule.conclusionTree)
 			})
@@ -103,7 +151,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 					}
 				})
 				rule.conditionsTree = node
-				syntaxTree.displayTree(node)
+				simplifyTrees(rule)
 				rules.push(rule)
 				createSubrules(rule.conditionsTree, rule.conclusionTree)
 			})
@@ -127,6 +175,8 @@ function createSubrules(conditionsTree, conclusionTree) {
 				node2.children.forEach(el => el.parent = node2)
 				rule2.conditionsTree = node2
 
+				simplifyTrees(rule1)
+				simplifyTrees(rule2)
 				rules.push(rule1)
 				rules.push(rule2)
 				createSubrules(rule1.conditionsTree, rule1.conclusionTree)
@@ -145,6 +195,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 				node1.children = [rule.conditionsTree, ...node.children.filter(el => el != child)]
 				node1.children.forEach(el => el.parent = node1)
 				rule.conditionsTree = node1
+				simplifyTrees(rule)
 				rules.push(rule)
 				createSubrules(rule.conditionsTree, rule.conclusionTree)
 			})
@@ -178,6 +229,8 @@ function createSubrules(conditionsTree, conclusionTree) {
 				node2.children.forEach(el => el.parent = node2)
 				rule2.conditionsTree = node2
 
+				simplifyTrees(rule1)
+				simplifyTrees(rule2)
 				rules.push(rule1)
 				rules.push(rule2)
 				createSubrules(rule1.conditionsTree, rule1.conclusionTree)

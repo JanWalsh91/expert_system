@@ -50,7 +50,7 @@ class Rule {
 		if (!ifAndOnlyIf) {
 			let rule = new Rule({conditionsTree: leftTree, conclusionTree: rightTree})
 
-	
+
 
 		 	return rule
 		} else {
@@ -59,14 +59,15 @@ class Rule {
 			rules.push(new Rule({conditionsTree: leftTree, conclusionTree: rightTree}))
 			rules.push(new Rule({conditionsTree: rightTree, conclusionTree: leftTree}))
 
-			// validate
-
-
-
 			return rules
 		}
-
 	}
+
+	display() {
+		console.log(`Rule: ${this.conditionsTree.key} => ${this.conclusionTree.key}`);
+	}
+
+
 }
 
 module.exports = Rule

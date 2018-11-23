@@ -345,7 +345,9 @@ const syntaxTree = {
 
 	duplicateNode,
 
-	negateNode
+	negateNode,
+
+	simplifyOperators
 }
 
 module.exports = syntaxTree
