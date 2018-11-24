@@ -28,7 +28,7 @@ class Rule {
 	}
 
 	static createFromString(string) {
-		console.log('createRuleFromString: ' + string)
+		// console.log('createRuleFromString: ' + string)
 
 		let ifAndOnlyIf = false;
 		let parts = []
@@ -39,13 +39,10 @@ class Rule {
 		}
 
 		let leftTree, rightTree
-		try {
-			leftTree = syntaxTree.createTree(parts[0])
-			rightTree = syntaxTree.createTree(parts[1])
-		} catch (e) {
-			console.log('ERROR: ' + e)
-			return
-		}
+
+		leftTree = syntaxTree.createTree(parts[0])
+		rightTree = syntaxTree.createTree(parts[1])
+
 
 		if (!ifAndOnlyIf) {
 			let rule = new Rule({conditionsTree: leftTree, conclusionTree: rightTree})
@@ -67,8 +64,8 @@ class Rule {
 		console.log(`Rule: ${this.conditionsTree.key} => ${this.conclusionTree.key}`);
 	}
 
-	resolve() {
-		return this.conditionsTree.resolve()
+	evaluate() {
+		return this.conditionsTree.evaluate()
 	}
 
 }

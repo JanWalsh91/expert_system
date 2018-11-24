@@ -29,54 +29,60 @@ if (fileName) {
 	let trueFactSymbols = []
 	let queryFactSymbols = []
 
-	lines.forEach(line => {
-		line = line.split('#')[0]
-		if (line.length == 0) return
+	try {
+		lines.forEach(line => {
+			line = line.split('#')[0]
+			if (line.length == 0) return
 
-		if (line[0] == '=') {
-			for (let i = 1; i < line.length; i++) {
-				let key = line.charAt(i)
-				if (!key.match(/^[A-Z]+$/)) {
-					throw 'Invalid initial fact'
+			if (line[0] == '=') {
+				for (let i = 1; i < line.length; i++) {
+					let key = line.charAt(i)
+					if (!key.match(/^[A-Z]+$/)) {
+						throw 'Invalid initial fact'
+					}
+					trueFactSymbols.push(key)
+					if (facts[key] == undefined) {
+						facts[key] = new Fact({key: key, state: true})
+					}
 				}
-				trueFactSymbols.push(key)
-				if (facts[key] == undefined) {
-					facts[key] = new Fact({key: key, state: true})
+			} else if (line[0] == '?') {
+				for (let i = 1; i < line.length; i++) {
+					let key = line.charAt(i)
+					if (!key.match(/^[A-Z]+$/)) {
+						throw 'Invalid query'
+					}
+					queryFactSymbols.push(key)
+					if (facts[key] == undefined) {
+						facts[key] = new Fact({key: key, query: true})
+					} else {
+						facts[key].query = true
+					}
 				}
-			}
-		} else if (line[0] == '?') {
-			for (let i = 1; i < line.length; i++) {
-				let key = line.charAt(i)
-				if (!key.match(/^[A-Z]+$/)) {
-					throw 'Invalid query'
-				}
-				queryFactSymbols.push(key)
-				if (facts[key] == undefined) {
-					facts[key] = new Fact({key: key, query: true})
-				} else {
-					facts[key].query = true
-				}
-			}
-		} else if (line.includes('=>')){
-			let right = false
-			for (let i = 0; i < line.length; i++) {
-				let key = line.charAt(i)
-				if (key.match(/^[A-Z]+$/)) {
+			} else if (line.includes('=>')){
+				let right = false
+				for (let i = 0; i < line.length; i++) {
+					let key = line.charAt(i)
+					if (key.match(/^[A-Z]+$/)) {
 						factSymbols.push(key)
 						if (right) {
 							conclusionFactSymbols.push(key)
 						}
+					}
+					if (key == '=') right = true
 				}
-				if (key == '=') right = true
+				let ret = Rule.createFromString(line)
+				if (ret instanceof Array) {
+					rules.push(...ret)
+				} else {
+					rules.push(ret)
+				}
 			}
-			let ret = Rule.createFromString(line)
-			if (ret instanceof Array) {
-				rules.push(...ret)
-			} else {
-				rules.push(ret)
-			}
-		}
-	})
+		})
+	} catch(e) {
+		console.log('AAAAAAAAAA' + e);
+		console.log(e);
+		return
+	}
 
 	// create subrules
 	rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
@@ -90,19 +96,15 @@ if (fileName) {
 		syntaxTree.assignKeysToNodes(rule.conclusionTree)
 	})
 
-	// TODO: add false facts to facts
-	// facts which are not in the dictionary
-
 	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
 
-	console.log('=== FACTS ===');
-	// console.log(facts);
-	for (let fact in facts) {
-		console.log(fact + ': ')
-		// console.log(facts[fact].rules)
-	}
-	console.log('=== RULES ===');
-	rules.forEach(rule => rule.display())
+	displayFacts()
+	displayRules()
+	console.log('  ');
+
+	evaluate()
+
+	displayFacts()
 
 }
 
@@ -238,9 +240,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 				createSubrules(rule2.conditionsTree, rule2.conclusionTree)
 			})
 		}
-
 	}
-
 }
 
 function createFactFromRule(rule) {
@@ -257,4 +257,27 @@ function createFactFromRule(rule) {
 	} else {
 		facts[key].rules.push(rule)
 	}
+}
+
+function evaluate() {
+	console.log('=== EVALUATE ===');
+	for (let fact in facts) {
+		console.log('OUTER LOOP: evaluating fact ' + fact);
+		facts[fact].evaluate()
+		console.log('OUTER LOOP: evaluating fact ' + fact + '  END');
+	}
+}
+
+function displayFacts() {
+	console.log('=== FACTS ===');
+	// console.log(facts);
+	for (let fact in facts) {
+		console.log(fact + ': ' + facts[fact].state)
+		// console.log(facts[fact].rules)
+	}
+}
+
+function displayRules() {
+	console.log('=== RULES ===');
+	rules.forEach(rule => rule.display())
 }

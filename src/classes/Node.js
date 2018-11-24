@@ -21,28 +21,65 @@ class Node {
 	}
 
 	evaluate() {
-		if (facts[this.key].state != undefined) {
+		console.log('Evaluate node ' + this.key);
+		if (facts[this.key] != undefined && facts[this.key].state != undefined) {
+			console.log(this.key + ' : ' + facts[this.key].state);
 			return facts[this.key].state
 		}
+		console.log('node ' + this.key + ' not in facts');
+		let results
 		switch (this.type) {
 			case 'OPERATOR':
 				switch (this.value) {
 					case '+':
+						results = this.children.map(child => child.evaluate())
+						var ret = (results.every(result => result === true))
+						var hasUndefined = (results.some(result => result === undefined))
+						if (hasUndefined) return undefined
+						else return ret
 						break
 					case '|':
+						results = this.children.map(child => child.evaluate())
+						console.log("results: ");
+						console.log(results);
+						let hasTrue = (results.some(result => result === true))
+						hasUndefined = (results.some(result => result === undefined))
+						console.log('hasTrue: ' + hasTrue);
+						console.log('hasUndefined: ' + hasUndefined);
+						if (!hasTrue && hasUndefined) {
+							console.log(this.key + ' : undefined')
+							return undefined
+						}
+						else return hasTrue
 						break
 					case '^':
+						results = this.children.map(child => child.evaluate())
+						if (results.some(result => result == undefined)) return undefined
+						return results[0] === !results[1]
 						break
 				}
 				break
 			case 'OPERAND':
-				if (this.value[0] == '!') {
-
+				console.log(this.key + ' is OPERAND');
+				if (this.value.charAt(0) == '!') {
+					if (facts[this.value.charAt(1)] != undefined) {
+						ret = facts[this.value.charAt(1)].evaluate()
+						if (ret === undefined) return undefined
+						return !ret
+					}
+					return undefined
 				} else {
-					return facts[this.key].resolve
+					if ('!' + facts[this.value.charAt(0)] != undefined) {
+						ret = facts['!' + this.value.charAt(0)].evaluate()
+						if (ret === undefined) return undefined
+						return !ret
+					}
 				}
 				break
 			case 'NOT':
+				ret = this.children[0].evaluate()
+				if (ret === undefined) return undefined
+				return !ret
 				break
 			default:
 				throw 'damn hoe! guuuuurl wtf!?'

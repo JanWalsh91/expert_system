@@ -128,12 +128,7 @@ function tokenize(exp) {
 
 	let tokens = []
 	for (let i = 0; i < exp.length; i++) {
-		try {
-			tokens.push(new Token(exp.charAt(i)))
-		} catch (e) {
-			console.log(e)
-			return
-		}
+		tokens.push(new Token(exp.charAt(i)))
 	}
 	return tokens
 }
@@ -330,7 +325,7 @@ const syntaxTree = {
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
 		orderNode(tree)
-		syntaxTree.displayTree(tree)
+		// syntaxTree.displayTree(tree)
 		return tree
 	},
 
