@@ -133,39 +133,50 @@ function createSubrules(conditionsTree, conclusionTree) {
 
 
 // truc de jan
-	// function buildIndexTables(total, min = 2) {
-	// 	let combinations = []
-	// 	for (let size = 0; size < total - 1; size++) {
-	// 		let list = []
-	// 		for (let i = 0; i < size; i++) {
-	//
-	// 		}
-	// 	}
-	// }
+	function BLAH(total) {
+		console.log('total: ' + total);
 
-	function faitDesTrucs (conditionsTree, conclusionTree) {
-		if (conditionsTree.type == 'OPERATOR') {
-			if (conditionsTree.value == '|' && conditionsTree.children.length > 2) {
-				let truc = []
-				for (let y = 2; y < conditionsTree.children.length; y++) {
-					console.log('Building length: ' + y);
-					console.log('White ' + (conditionsTree.children.length - y + 1));
-					for (let z = 0; z < conditionsTree.children.length - y + 1; z++) {
-						console.log('==> z: ' + z);
-						// for (let o = conditionsTree.children.length - y + 1; o > 0; o--) {
-						// 	for (let w = 0; w < y; w++) {
-						// 		process.stdout.write(conditionsTree.children[].value + ' ')
-						// 	}
-						// }
-						console.log(" ");
+		function increment(list, index) {
+			// console.log('increment index: ' + index);
+			let updated = false
+			if (list[index] < total - 1) {
+				// console.log('incrementing');
+				list[index]++
+				// console.log(list);
+				// console.log('list.length: ' + list.length);
+				for (let i = 1; index + i < list.length; i++) {
+					list[index + i] = list[index] + i
+					if (list[index + i] >= total) {
+						if (index > 0) {
+							return increment(list, index - 1)
+						} else {
+							return false
+						}
 					}
 				}
+				return true
+			} else {
+				return increment(list, index - 1)
+			}
+		}
+
+		let min = 2
+		let combinations = []
+		for (let size = min; size < total; size++) {
+			console.log('=========size: ' + size);
+			let list = []
+			for (let i = 0; i < size; i++) {
+				list.push(i)
+			}
+			console.log(list);
+			while (increment(list, list.length - 1)) {
+				console.log(list);
 			}
 		}
 	}
 
-
-	faitDesTrucs(conditionsTree, conclusionTree)
+	BLAH(conditionsTree.children.length)
+	// faitDesTrucs(conditionsTree, conclusionTree)
 	throw 'Done'
 
 	if (conclusionTree.type == 'OPERATOR') {
