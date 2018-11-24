@@ -58,17 +58,20 @@ if (fileName) {
 						facts[key].query = true
 					}
 				}
-			} else if (line.includes('=>')){
-				let right = false
+			} else if (line.includes('=>')) {
+				let isConclusion = false
+				if (line.includes('<=>')) {
+					isConclusion = true
+				}
 				for (let i = 0; i < line.length; i++) {
 					let key = line.charAt(i)
 					if (key.match(/^[A-Z]+$/)) {
 						factSymbols.push(key)
-						if (right) {
+						if (isConclusion) {
 							conclusionFactSymbols.push(key)
 						}
 					}
-					if (key == '=') right = true
+					if (key == '=') isConclusion = true
 				}
 				let ret = Rule.createFromString(line)
 				if (ret instanceof Array) {
