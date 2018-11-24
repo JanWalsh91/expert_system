@@ -1,5 +1,19 @@
-A + B => C
+A => !B
+!!B => B
 
-=AB
+=A
+?B
 
-?A
+
+//bool a = false;
+// bool a = true;
+
+
+if (b == T) {      b => !a
+ !a == T
+}
+
+if (b && !a) {
+	a == !!a
+}
+!a

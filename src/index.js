@@ -105,9 +105,9 @@ if (fileName) {
 	displayRules()
 	console.log('  ');
 
-	evaluate()
-
-	displayFacts()
+	// evaluate()
+	//
+	// displayFacts()
 
 }
 
@@ -129,6 +129,44 @@ function createSubrules(conditionsTree, conclusionTree) {
 		syntaxTree.simplifyOperators(rule.conditionsTree)
 		syntaxTree.simplifyOperators(rule.conclusionTree)
 	}
+
+
+
+// truc de jan
+	// function buildIndexTables(total, min = 2) {
+	// 	let combinations = []
+	// 	for (let size = 0; size < total - 1; size++) {
+	// 		let list = []
+	// 		for (let i = 0; i < size; i++) {
+	//
+	// 		}
+	// 	}
+	// }
+
+	function faitDesTrucs (conditionsTree, conclusionTree) {
+		if (conditionsTree.type == 'OPERATOR') {
+			if (conditionsTree.value == '|' && conditionsTree.children.length > 2) {
+				let truc = []
+				for (let y = 2; y < conditionsTree.children.length; y++) {
+					console.log('Building length: ' + y);
+					console.log('White ' + (conditionsTree.children.length - y + 1));
+					for (let z = 0; z < conditionsTree.children.length - y + 1; z++) {
+						console.log('==> z: ' + z);
+						// for (let o = conditionsTree.children.length - y + 1; o > 0; o--) {
+						// 	for (let w = 0; w < y; w++) {
+						// 		process.stdout.write(conditionsTree.children[].value + ' ')
+						// 	}
+						// }
+						console.log(" ");
+					}
+				}
+			}
+		}
+	}
+
+
+	faitDesTrucs(conditionsTree, conclusionTree)
+	throw 'Done'
 
 	if (conclusionTree.type == 'OPERATOR') {
 		if (conclusionTree.value == '+') {
@@ -244,6 +282,23 @@ function createSubrules(conditionsTree, conclusionTree) {
 			})
 		}
 	}
+	// else if (conclusionTree.type == 'OPERAND') {
+		// if (conclusionTree.value.charAt(0) == '!') {
+			// let rule = new Rule({
+			// 	conditionsTree: syntaxTree.duplicateNode(conclusionTree),
+			// 	conclusionTree: syntaxTree.negateNode(conclusionTree)
+			// })
+			// simplifyTrees(rule)
+			// rules.push(rule)
+		// } else {
+		// 	let rule = new Rule({
+		// 		conditionsTree: syntaxTree.negateNode(conclusionTree),
+		// 		conclusionTree: syntaxTree.duplicateNode(conclusionTree)
+		// 	})
+		// 	simplifyTrees(rule)
+		// 	rules.push(rule)
+		// }
+	// }
 }
 
 function createFactFromRule(rule) {

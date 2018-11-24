@@ -135,10 +135,18 @@ function tokenize(exp) {
 
 function createTree(tokens) {
 
+	// const op = {
+	// 	'+': 1,
+	// 	'|': 1,
+	// 	'^': 2
+	// }
 	const op = {
-		'+': 1,
-		'|': 1,
-		'^': 2
+		'(': 5,
+		')': 5,
+		'!': 4,
+		'+': 3,
+		'|': 2,
+		'^': 1
 	}
 
 	let root = new Node()
@@ -204,9 +212,9 @@ function createTree(tokens) {
 						currentNode = node
 					} else {
 						while (op[tokens[i].value] <= op[currentNode.value] && currentNode.parent != null && currentNode.type != 'OPEN_PARENTHESES') {
-							if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
-								throw 'Ambiguous Error'
-							}
+							// if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
+							// 	throw 'Ambiguous Error'
+							// }
 							currentNode = currentNode.parent
 						}
 						if (currentNode.value == null) {
@@ -214,9 +222,9 @@ function createTree(tokens) {
 							currentNode.value = tokens[i].value
 							break
 						}
-						if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
-							throw 'Ambiguous Error'
-						}
+						// if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
+						// 	throw 'Ambiguous Error'
+						// }
 						if (currentNode.value == tokens[i].value) {
 							break
 						}
@@ -235,11 +243,6 @@ function createTree(tokens) {
 						node.children.push(a)
 						currentNode.children.splice(currentNode.children.indexOf(a), 1)
 						currentNode = node
-					}
-				} else if (currentNode.type == 'NOT') {
-					// TODO: PANHANDLE
-					if (currentNode.left == null) {
-						throw 'Not (!) Error currentNode.left == null'
 					}
 				}
 				break;
@@ -264,6 +267,8 @@ function createTree(tokens) {
 				}
 				break;
 		}
+		// console.log('=====');
+		// syntaxTree.displayTree(root)
 	}
 
 	while (root.value == null) {

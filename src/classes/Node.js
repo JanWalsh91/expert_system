@@ -22,9 +22,31 @@ class Node {
 
 	evaluate() {
 		console.log('Evaluate node ' + this.key);
-		if (facts[this.key] != undefined && facts[this.key].state != undefined) {
+		if (facts[this.key] != undefined) {
 			console.log(this.key + ' : ' + facts[this.key].state);
-			return facts[this.key].state
+			if (facts[this.key].state != undefined) {
+				return facts[this.key].state
+			} else {
+				return facts[this.key].evaluate()
+			}
+		} else {
+			console.log('ESLSELSELSLA');
+			if (this.key.charAt(0) != '!' && facts['!' + this.key] != undefined) {
+				console.log('====================================1');
+				if (facts['!' + this.key].state != undefined) {
+					return facts['!' + this.key].state
+				} else {
+					return facts['!' + this.key].evaluate()
+				}
+			} else if (this.key.charAt(0) == '!' && facts[this.key.substr(1)] != undefined) {
+				console.log('====================================2');
+
+				if (facts[this.key.substr(1)].state != undefined) {
+					return facts[this.key.substr(1)].state
+				} else {
+					return facts[this.key.substr(1)].evaluate()
+				}
+			}
 		}
 		console.log('node ' + this.key + ' not in facts');
 		let results
@@ -69,7 +91,7 @@ class Node {
 					}
 					return undefined
 				} else {
-					if ('!' + facts[this.value.charAt(0)] != undefined) {
+					if (facts['!' + this.value.charAt(0)] != undefined) {
 						ret = facts['!' + this.value.charAt(0)].evaluate()
 						if (ret === undefined) return undefined
 						return !ret
