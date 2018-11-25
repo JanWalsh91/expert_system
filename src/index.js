@@ -105,9 +105,9 @@ if (fileName) {
 	displayRules()
 	console.log('  ');
 
-	// evaluate()
-	//
-	// displayFacts()
+	evaluate()
+
+	displayFacts()
 
 }
 
@@ -123,193 +123,332 @@ function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, q
 	})
 }
 
+/*
+ * Create rules based on nodes in conditionsTree and conclusionTree
+ * == expanding conclusionTree ==
+ * A => B + C + D
+ * 		A => B
+ * 		A => C
+ * 		A => D
+ * A => B | C \ D
+ * 		A + !C + !D => B
+ * 		A + !B + !D => C
+ * 		A + !B + !C => D
+ * A => B ^ C								#more than 2 ^s in conclusionTree is ERROR
+ *		A + !C => B
+ *		A + C => !B
+ *		A + !B => C
+ *		A + B => !C
+ * A => !(B + C + D)
+ * 		A + C + D => !B
+ * 		A + B + D => !C
+ * 		A + B + D => !D
+ * A => !(B | C | D)
+ * 		A => !B
+ * 		A => !C
+ * 		A => !D
+ * A => !(B ^ C)					#more than 2 ^s in conclusionTree is ERROR
+ * 		A + C => B
+ * 		A + !C => !B
+ * 		A + B => C
+ * 		A + !B => !C
+ * == expanding conditionsTree ==
+ * A + B + C => D					#no expansion
+ * A | B | C => D
+ * 		A => D
+ * 		B => D
+ * 		C => D
+ * 		A | B => D
+ * 		A | C => D
+ * 		B | C => D
+ * A ^ B => C							#no expansion
+ * !(A + B + C) => D			#similar to A | B | C => D
+ * 		!A => D
+ * 		!B => D
+ * 		!C => D
+ * 		!(A | B) => D
+ * 		!(A | C) => D
+ * 		!(B | C) => D
+ * !(A | B | C) => D			#no expansion
+ * !(A ^ B) => C					#no expansion
+ */
 function createSubrules(conditionsTree, conclusionTree) {
 
 	function simplifyTrees(rule) {
 		syntaxTree.simplifyOperators(rule.conditionsTree)
 		syntaxTree.simplifyOperators(rule.conclusionTree)
 	}
+	createSubrulesFromConclusionTree()
+	createSubrulesFromConditionsTree()
 
 
 
-// truc de jan
-	function BLAH(total) {
-		console.log('total: ' + total);
+	function createSubrulesFromConclusionTree() {
+		if (conclusionTree.type == 'OPERATOR')
+			handleOperators()
+		else if (conclusionTree.type == 'NOT')
+			handleNot()
 
-		function increment(list, index) {
-			// console.log('increment index: ' + index);
-			let updated = false
-			if (list[index] < total - 1) {
-				// console.log('incrementing');
-				list[index]++
-				// console.log(list);
-				// console.log('list.length: ' + list.length);
-				for (let i = 1; index + i < list.length; i++) {
-					list[index + i] = list[index] + i
-					if (list[index + i] >= total) {
-						if (index > 0) {
-							return increment(list, index - 1)
-						} else {
-							return false
+		function handleOperators() {
+			if (conclusionTree.value == '+')
+				handleAnd()
+			else if (conclusionTree.value == '|')
+				handleOr()
+			else if (conclusionTree.value == '^')
+				handleXor()
+
+			function handleAnd() {
+				conclusionTree.children.forEach(child => {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(child)
+					})
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleOr() {
+				conclusionTree.children.forEach(child => {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(child)
+					})
+
+					let node = new Node({value: '+', type: 'OPERATOR'})
+					node.children = [syntaxTree.duplicateNode(conditionsTree)]
+					conclusionTree.children.forEach(subchild => {
+						if (subchild != child) {
+							subchild.parent = node
+							node.children.push(syntaxTree.negateNode(subchild))
+						}
+					})
+					rule.conditionsTree = node
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleXor() {
+				conclusionTree.children.forEach(child => {
+					let rule1 = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.negateNode(child)
+					})
+					let node1 = new Node({value: '+', type: 'OPERATOR'})
+					node1.children = [rule1.conditionsTree, conclusionTree.children.find(el => el != child)]
+					node1.children.forEach(el => el.parent = node1)
+					rule1.conditionsTree = node1
+
+					let rule2 = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(child)
+					})
+					let node2 = new Node({value: '+', type: 'OPERATOR'})
+					node2.children = [rule2.conditionsTree, syntaxTree.negateNode(conclusionTree.children.find(el => el != child))]
+					node2.children.forEach(el => el.parent = node2)
+					rule2.conditionsTree = node2
+
+					simplifyTrees(rule1)
+					simplifyTrees(rule2)
+					rules.push(rule1)
+					rules.push(rule2)
+					createSubrules(rule1.conditionsTree, rule1.conclusionTree)
+					createSubrules(rule2.conditionsTree, rule2.conclusionTree)
+				})
+			}
+		}
+
+		function handleNot() {
+			let node = syntaxTree.duplicateNode(conclusionTree.children[0])
+
+			if (node.value == '+')
+				handleAnd()
+			else if (node.value == '|')
+				handleOr()
+			else if (node.value == '^')
+				handleXor()
+
+			function handleAnd() {
+				node.children.forEach(child => {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.negateNode(child)
+					})
+					let node1 = new Node({value: '+', type: 'OPERATOR'})
+					node1.children = [rule.conditionsTree, ...node.children.filter(el => el != child)]
+					node1.children.forEach(el => el.parent = node1)
+					rule.conditionsTree = node1
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleOr() {
+				node.children.forEach(child => {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(child)
+					})
+					rule.conclusionTree = syntaxTree.negateNode(rule.conclusionTree)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleXor() {
+				node.children.forEach(child => {
+					let rule1 = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(child)
+					})
+					let node1 = new Node({value: '+', type: 'OPERATOR'})
+					node1.children = [rule1.conditionsTree, node.children.find(el => el != child)]
+					node1.children.forEach(el => el.parent = node1)
+					rule1.conditionsTree = node1
+
+					let rule2 = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.negateNode(child)
+					})
+					let node2 = new Node({value: '+', type: 'OPERATOR'})
+					node2.children = [rule2.conditionsTree, syntaxTree.negateNode(node.children.find(el => el != child))]
+					node2.children.forEach(el => el.parent = node2)
+					rule2.conditionsTree = node2
+
+					simplifyTrees(rule1)
+					simplifyTrees(rule2)
+					rules.push(rule1)
+					rules.push(rule2)
+					createSubrules(rule1.conditionsTree, rule1.conclusionTree)
+					createSubrules(rule2.conditionsTree, rule2.conclusionTree)
+				})
+			}
+		}
+	}
+
+	function createSubrulesFromConditionsTree() {
+		if (conditionsTree.type == 'OPERATOR')
+			handleOperators()
+		else if (conditionsTree.type == 'NOT')
+			handleNot()
+
+		function handleOperators() {
+			if (conditionsTree.value == '+')
+				handleAnd()
+			else if (conditionsTree.value == '|')
+				handleOr()
+			else if (conditionsTree.value == '^')
+				handleXor()
+
+			function handleAnd() {
+				// console.log('dont expand');
+			}
+			function handleOr() {
+				let nodes = createNodeTreeCombinations(conditionsTree, 1)
+
+				nodes.forEach(node => {
+					let rule = new Rule({
+						conditionsTree: node,
+						conclusionTree: syntaxTree.duplicateNode(conclusionTree)
+					})
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleXor() {
+				// console.log('dont expand');
+			}
+
+		}
+
+		function handleNot() {
+			let node = syntaxTree.duplicateNode(conditionsTree.children[0])
+
+			if (node.value == '+')
+				handleAnd()
+			else if (node.value == '|')
+				handleOr()
+			else if (node.value == '^')
+				handleXor()
+
+			function handleAnd() {
+				let nodes = createNodeTreeCombinations(node, 1)
+				nodes.forEach(node => {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.negateNode(node),
+						conclusionTree: syntaxTree.duplicateNode(conclusionTree)
+					})
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				})
+			}
+			function handleOr() {
+				// console.log('dont expand');
+			}
+			function handleXor() {
+				// console.log('dont expand');
+			}
+
+		}
+
+		function createNodeTreeCombinations(tree, min) {
+			let indexLists = createIndexCombinations(tree.children.length, min)
+			return indexLists.map(indexList => {
+				if (indexList.length == 1) return tree.children[indexList[0]]
+				let node = new Node({type: 'OPERATOR', value: '|'})
+				let children = indexList.map(i => {
+					let child = syntaxTree.duplicateNode(tree.children[i])
+					child.parent = node
+					return child
+				})
+				node.children = children
+				return node
+			})
+		}
+
+		/*
+		 * return a table of tables of indices to find all combinations for case A | B | C => D
+		 */
+		function createIndexCombinations(total, min) {
+			min = min || 2
+			let combinations = []
+			for (let size = min; size < total; size++) {
+				let list = []
+				for (let i = 0; i < size; i++) {
+					list.push(i)
+				}
+				combinations.push(list.slice())
+				while (increment(list, list.length - 1)) {
+					combinations.push(list.slice())
+				}
+			}
+			return combinations
+
+			function increment(list, index) {
+				let updated = false
+				if (list[index] < total - 1) {
+					list[index]++
+					for (let i = 1; index + i < list.length; i++) {
+						list[index + i] = list[index] + i
+						if (list[index + i] >= total) {
+							if (index > 0) {
+								return increment(list, index - 1)
+							} else {
+								return false
+							}
 						}
 					}
+					return true
+				} else if (index - 1 >= 0) {
+					return increment(list, index - 1)
 				}
-				return true
-			} else {
-				return increment(list, index - 1)
 			}
-		}
 
-		let min = 2
-		let combinations = []
-		for (let size = min; size < total; size++) {
-			console.log('=========size: ' + size);
-			let list = []
-			for (let i = 0; i < size; i++) {
-				list.push(i)
-			}
-			console.log(list);
-			while (increment(list, list.length - 1)) {
-				console.log(list);
-			}
 		}
 	}
 
-	BLAH(conditionsTree.children.length)
-	// faitDesTrucs(conditionsTree, conclusionTree)
-	throw 'Done'
-
-	if (conclusionTree.type == 'OPERATOR') {
-		if (conclusionTree.value == '+') {
-			conclusionTree.children.forEach(child => {
-				let rule = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.duplicateNode(child)
-				})
-				simplifyTrees(rule)
-				rules.push(rule)
-				createSubrules(rule.conditionsTree, rule.conclusionTree)
-			})
-		} else if (conclusionTree.value == '|') {
-			conclusionTree.children.forEach(child => {
-				let rule = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.duplicateNode(child)
-				})
-
-				let node = new Node({value: '+', type: 'OPERATOR'})
-				node.children = [syntaxTree.duplicateNode(conditionsTree)]
-				conclusionTree.children.forEach(subchild => {
-					if (subchild != child) {
-						subchild.parent = node
-						node.children.push(syntaxTree.negateNode(subchild))
-					}
-				})
-				rule.conditionsTree = node
-				simplifyTrees(rule)
-				rules.push(rule)
-				createSubrules(rule.conditionsTree, rule.conclusionTree)
-			})
-		} else if (conclusionTree.value == '^') {
-			conclusionTree.children.forEach(child => {
-				let rule1 = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.negateNode(child)
-				})
-				let node1 = new Node({value: '+', type: 'OPERATOR'})
-				node1.children = [rule1.conditionsTree, conclusionTree.children.find(el => el != child)]
-				node1.children.forEach(el => el.parent = node1)
-				rule1.conditionsTree = node1
-
-				let rule2 = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.duplicateNode(child)
-				})
-				let node2 = new Node({value: '+', type: 'OPERATOR'})
-				node2.children = [rule2.conditionsTree, syntaxTree.negateNode(conclusionTree.children.find(el => el != child))]
-				node2.children.forEach(el => el.parent = node2)
-				rule2.conditionsTree = node2
-
-				simplifyTrees(rule1)
-				simplifyTrees(rule2)
-				rules.push(rule1)
-				rules.push(rule2)
-				createSubrules(rule1.conditionsTree, rule1.conclusionTree)
-				createSubrules(rule2.conditionsTree, rule2.conclusionTree)
-			})
-		}
-	}	else if (conclusionTree.type == 'NOT') {
-		let node = syntaxTree.duplicateNode(conclusionTree.children[0])
-		if (node.value == '+') {
-			node.children.forEach(child => {
-				let rule = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.negateNode(child)
-				})
-				let node1 = new Node({value: '+', type: 'OPERATOR'})
-				node1.children = [rule.conditionsTree, ...node.children.filter(el => el != child)]
-				node1.children.forEach(el => el.parent = node1)
-				rule.conditionsTree = node1
-				simplifyTrees(rule)
-				rules.push(rule)
-				createSubrules(rule.conditionsTree, rule.conclusionTree)
-			})
-		} else if (node.value == '|') {
-			node.children.forEach(child => {
-				let rule = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.duplicateNode(child)
-				})
-				rule.conclusionTree = syntaxTree.negateNode(rule.conclusionTree)
-				rules.push(rule)
-				createSubrules(rule.conditionsTree, rule.conclusionTree)
-			})
-		}	else if (node.value == '^') {
-			node.children.forEach(child => {
-				let rule1 = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.duplicateNode(child)
-				})
-				let node1 = new Node({value: '+', type: 'OPERATOR'})
-				node1.children = [rule1.conditionsTree, node.children.find(el => el != child)]
-				node1.children.forEach(el => el.parent = node1)
-				rule1.conditionsTree = node1
-
-				let rule2 = new Rule({
-					conditionsTree: syntaxTree.duplicateNode(conditionsTree),
-					conclusionTree: syntaxTree.negateNode(child)
-				})
-				let node2 = new Node({value: '+', type: 'OPERATOR'})
-				node2.children = [rule2.conditionsTree, syntaxTree.negateNode(node.children.find(el => el != child))]
-				node2.children.forEach(el => el.parent = node2)
-				rule2.conditionsTree = node2
-
-				simplifyTrees(rule1)
-				simplifyTrees(rule2)
-				rules.push(rule1)
-				rules.push(rule2)
-				createSubrules(rule1.conditionsTree, rule1.conclusionTree)
-				createSubrules(rule2.conditionsTree, rule2.conclusionTree)
-			})
-		}
-	}
-	// else if (conclusionTree.type == 'OPERAND') {
-		// if (conclusionTree.value.charAt(0) == '!') {
-			// let rule = new Rule({
-			// 	conditionsTree: syntaxTree.duplicateNode(conclusionTree),
-			// 	conclusionTree: syntaxTree.negateNode(conclusionTree)
-			// })
-			// simplifyTrees(rule)
-			// rules.push(rule)
-		// } else {
-		// 	let rule = new Rule({
-		// 		conditionsTree: syntaxTree.negateNode(conclusionTree),
-		// 		conclusionTree: syntaxTree.duplicateNode(conclusionTree)
-		// 	})
-		// 	simplifyTrees(rule)
-		// 	rules.push(rule)
-		// }
-	// }
 }
 
 function createFactFromRule(rule) {
