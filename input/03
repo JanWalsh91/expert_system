@@ -1,5 +1,5 @@
-#!(A + B + C) => Z
-A | B => Z
+A => C | D | F
+C | E | D => Z
 
 =A
 ?Z

@@ -30,7 +30,6 @@ class Node {
 				return facts[this.key].evaluate()
 			}
 		} else {
-			console.log('ESLSELSELSLA');
 			if (this.key.charAt(0) != '!' && facts['!' + this.key] != undefined) {
 				console.log('====================================1');
 				if (facts['!' + this.key].state != undefined) {
@@ -39,12 +38,13 @@ class Node {
 					return facts['!' + this.key].evaluate()
 				}
 			} else if (this.key.charAt(0) == '!' && facts[this.key.substr(1)] != undefined) {
-				console.log('====================================2');
+				console.log('====================================2 ' + facts[this.key.substr(1)].state);
 
 				if (facts[this.key.substr(1)].state != undefined) {
-					return facts[this.key.substr(1)].state
+					return !facts[this.key.substr(1)].state
 				} else {
-					return facts[this.key.substr(1)].evaluate()
+					let res = facts[this.key.substr(1)].evaluate()
+					return res == undefined ? undefined : !res
 				}
 			}
 		}
@@ -54,6 +54,7 @@ class Node {
 			case 'OPERATOR':
 				switch (this.value) {
 					case '+':
+					console.log('+');
 						results = this.children.map(child => child.evaluate())
 						var ret = (results.every(result => result === true))
 						var hasUndefined = (results.some(result => result === undefined))
@@ -61,6 +62,7 @@ class Node {
 						else return ret
 						break
 					case '|':
+					console.log('|');
 						results = this.children.map(child => child.evaluate())
 						console.log("results: ");
 						console.log(results);

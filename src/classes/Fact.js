@@ -1,3 +1,5 @@
+const facts = require('../facts')
+
 class Fact {
 	constructor(params) {
 		params = params || {}
@@ -30,22 +32,36 @@ class Fact {
 		}
 
 		let results = this.rules.map(rule => {
+			console.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key);
 			this.evaluating = true
 			let ret = rule.evaluate()
 			this.evaluating = false
-			return ret
+			console.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' END');
+			console.log('ret : '  + ret);
+			if (ret == true && rule.conclusionTree.key[0] == '|') {
+				rule.conclusionTree.children.forEach(child => {
+					if (facts[child.key].state != true) { //TODO: != true ? or == undefined
+						facts[child.key].state = 'ambiguous'
+					}
+				})
+			}
+			return ret == true ? true : undefined
 		})
 		if (results.length == 0) {
-			this.state == undefined
+			// this.state == undefined
+			this.state == false
 			this.error = false
-		} else if (results.every(result => result == results[0])) {
-			this.state = results[0]
+			// console.log('SET ' + this.key + ' to ' + this.state);
+		} else if (results.some(result => result === true)) {
+			this.state = true
 			this.error = false
-		} else {
-			this.state = undefined
-			this.error = 'conflicting rules'
+			// console.log('SET ' + this.key + ' to ' + this.state);
 		}
-		console.log('SET ' + this.key + ' to ' + this.state);
+		// else {
+		// 	this.state = undefined
+		// 	this.error = 'conflicting rules'
+		// }
+		// console.log('SET ' + this.key + ' to ' + this.state);
 		return this.state
 	}
 }
