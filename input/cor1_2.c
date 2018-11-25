@@ -7,7 +7,6 @@ L + M => K
 O + P => L + N		#F
 N => M
 
-=DEIJOP
-#=DEIJP
+=DEIJP
 
 ?AFKP

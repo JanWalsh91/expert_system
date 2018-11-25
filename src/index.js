@@ -101,11 +101,17 @@ if (fileName) {
 
 	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
 
-	displayFacts()
+	// displayFacts()
 	displayRules()
 	console.log('  ');
 
 	evaluate()
+
+	for (let fact in facts) {
+		if (facts[fact].state == undefined) {
+			facts[fact].state = false
+		}
+	}
 
 	displayFacts()
 
