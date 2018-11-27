@@ -33,9 +33,7 @@ class Rule {
 		let ifAndOnlyIf = false;
 		let parts = []
 		if (!( ((parts = string.split('<=>')).length == 2 && (ifAndOnlyIf = true)) || (parts = string.split('=>')).length == 2) ) {
-			console.log('Error: ' + parts)
-			console.log(parts.length)
-			return
+			throw 'Invalid rule "' + string + '"'
 		}
 
 		let leftTree, rightTree

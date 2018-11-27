@@ -16,7 +16,7 @@ if (fileName) {
 	try {
 		contents = fs.readFileSync(fileName, 'utf8');
 	} catch(e) {
-		console.log(e)
+		console.error("Error: " + e.message)
 		return
 	}
 
@@ -28,6 +28,8 @@ if (fileName) {
 	let conclusionFactSymbols = []
 	let trueFactSymbols = []
 	let queryFactSymbols = []
+
+	let hasRules, hasInitialFacts, hasQueries = false
 
 	try {
 		lines.forEach(line => {
@@ -45,6 +47,11 @@ if (fileName) {
 						facts[key] = new Fact({key: key, state: true})
 					}
 				}
+				if (hasInitialFacts) {
+					throw 'Can only have one set of initial facts'
+				}
+				if (line[1] != undefined)
+					hasInitialFacts = true
 			} else if (line[0] == '?') {
 				for (let i = 1; i < line.length; i++) {
 					let key = line.charAt(i)
@@ -58,6 +65,11 @@ if (fileName) {
 						facts[key].query = true
 					}
 				}
+				if (hasQueries) {
+					throw 'Can only have one set of queries'
+				}
+				if (line[1] != undefined)
+					hasQueries = true
 			} else if (line.includes('=>')) {
 				let isConclusion = false
 				if (line.includes('<=>')) {
@@ -73,17 +85,34 @@ if (fileName) {
 					}
 					if (key == '=') isConclusion = true
 				}
-				let ret = Rule.createFromString(line)
+				let ret
+				try {
+					ret = Rule.createFromString(line)
+				} catch (e) {
+					throw 'Rule creation failed: ' + e + ' "' + line + '"'
+				}
 				if (ret instanceof Array) {
 					rules.push(...ret)
 				} else {
 					rules.push(ret)
 				}
+				hasRules = true
 			}
 		})
 	} catch(e) {
-		console.log('AAAAAAAAAA' + e);
-		console.log(e);
+		console.error('Error: ' + e);
+		// console.log(e);
+		return
+	}
+
+	if (!hasRules) {
+		console.error('Error: Needs at least one rule')
+		return
+	} else if (!hasInitialFacts) {
+		console.error('Error: Needs at least one initial fact')
+		return
+	} else	if (!hasQueries) {
+		console.error('Error: Needs at least one query')
 		return
 	}
 

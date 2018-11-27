@@ -6,7 +6,7 @@ class Token {
 		}
 
 		if (!isValidToken(value)) {
-			throw 'Invalid token' + value
+			throw 'Invalid token "' + value + '"'
 		}
 
 		function getType(t) {

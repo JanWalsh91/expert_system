@@ -22,4 +22,6 @@ do
 		else
 			printf "$filename: OK\n"
 		fi
+
+		rm tmp 2>/dev/null
 done

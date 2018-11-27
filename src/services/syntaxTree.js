@@ -33,21 +33,18 @@ function displayTree(node, depth) {
 function isTreeValid(node) {
 	if (node.type == 'OPERATOR') {
 		if (node.children.length < 2) {
-			throw `node ${node.value} requries at least 2 children`
-		}
-		if (node.value == '^' && node.children.length != 2) {
-			throw `node ${node.value} requries exactly 2 children`
+			throw `Node "${node.value}" requires at least two children`
 		}
 	} else if (node.type == 'NOT') {
 		if (node.children.length != 1) {
-			throw `node ${node.value} requries exactly 1 child`
+			throw `Node "${node.value}" requires exactly one child`
 		}
 		if (node.children[0].type == 'NOT') {
-			throw 'cannot have two NOTs in a row'
+			throw 'Cannot have two "!" in a row'
 		}
 	} else if (node.type == 'OPERAND') {
 		if (node.children.length > 0) {
-			throw `node ${node.value} cannot have children`
+			throw `Node "${node.value}" cannot have children`
 		}
 	}
 	node.children.forEach(child => isTreeValid(child))
@@ -123,7 +120,7 @@ function orderNode(node) {
 
 function tokenize(exp) {
 	if (!checkParentheses(exp)) {
-		throw 'parentheses error'
+		throw 'Invalid parentheses'
 	}
 
 	let tokens = []
@@ -167,7 +164,7 @@ function createTree(tokens) {
 				while (currentNode.type != 'OPEN_PARENTHESES' && currentNode.parent != null) {
 					currentNode = currentNode.parent
 				}
-				if (currentNode.parent == null) throw 'Close_Parenthesis ErR0r'
+				if (currentNode.parent == null) throw 'Invalid parentheses'
 				currentNode = currentNode.parent
 				let parentheses = currentNode.children[currentNode.children.length - 1]
 				currentNode.children.push(parentheses.children[0])
@@ -176,12 +173,12 @@ function createTree(tokens) {
 				if (currentNode.type == 'NOT' && currentNode.parent != null) {
 					currentNode = currentNode.parent
 				} else if (currentNode.type == 'NOT' && currentNode.parent == null) {
-					throw 'Not has no parent'
+					throw 'Internal error'
 				}
 				break
 			case 'OPERAND':
 				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/) || tokens[i - 1].value == '!')) {
-					throw 'operand error'
+					throw 'Missing operator'
 				}
 				if (currentNode.type == null || currentNode.type == 'OPERATOR') {
 					let node = new Node(tokens[i])
@@ -201,7 +198,7 @@ function createTree(tokens) {
 					}
 					if (op[tokens[i].value] > op[currentNode.value]) {
 						if (currentNode.children.length < 2) {
-							throw 'Operator Error'
+							throw 'Operator requires at least two children'
 						}
 						let a = currentNode.children[currentNode.children.length - 1]
 						let node = new Node(tokens[i])
@@ -212,9 +209,6 @@ function createTree(tokens) {
 						currentNode = node
 					} else {
 						while (op[tokens[i].value] <= op[currentNode.value] && currentNode.parent != null && currentNode.type != 'OPEN_PARENTHESES') {
-							// if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
-							// 	throw 'Ambiguous Error'
-							// }
 							currentNode = currentNode.parent
 						}
 						if (currentNode.value == null) {
@@ -222,9 +216,6 @@ function createTree(tokens) {
 							currentNode.value = tokens[i].value
 							break
 						}
-						// if (op[tokens[i].value] == op[currentNode.value] && tokens[i].value != currentNode.value) {
-						// 	throw 'Ambiguous Error'
-						// }
 						if (currentNode.value == tokens[i].value) {
 							break
 						}
@@ -247,7 +238,7 @@ function createTree(tokens) {
 				}
 				break;
 			case 'NOT':
-				if (i + 1 >= tokens.length) throw 'Not Error'
+				if (i + 1 >= tokens.length) throw '"!" must be followed by something'
 				if (tokens[i + 1].type == 'OPERAND') {
 					if (currentNode.type == null || currentNode.type == 'OPERATOR') {
 						let node = new Node(tokens[i + 1])
@@ -263,17 +254,15 @@ function createTree(tokens) {
 					node.parent = currentNode
 					currentNode = node
 				} else {
-					throw 'error 109'
+					throw '"!" must be followed by "(" or an operand'
 				}
 				break;
 		}
-		// console.log('=====');
-		// syntaxTree.displayTree(root)
 	}
 
 	while (root.value == null) {
 		if (root.children.length > 1) {
-			throw 'Removing empty nodes error'
+			throw 'Multiple trees detected'
 		}
 		root = root.children[0]
 		root.parent = null
@@ -327,6 +316,9 @@ const syntaxTree = {
 	},
 
 	createTree: string => {
+		if (string.length == 0) {
+			throw 'Expression empty'
+		}
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
 		orderNode(tree)
