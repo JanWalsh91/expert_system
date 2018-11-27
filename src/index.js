@@ -108,10 +108,12 @@ if (fileName) {
 	if (!hasRules) {
 		console.error('Error: Needs at least one rule')
 		return
-	} else if (!hasInitialFacts) {
-		console.error('Error: Needs at least one initial fact')
-		return
-	} else	if (!hasQueries) {
+	}
+	// else if (!hasInitialFacts) {
+	// 	console.error('Error: Needs at least one initial fact')
+	// 	return
+	// }
+	else	if (!hasQueries) {
 		console.error('Error: Needs at least one query')
 		return
 	}

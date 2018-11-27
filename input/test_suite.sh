@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for filename in cor*.c
+for filename in cor*.es
 do
 		fail=false
     node ../src/index.js $filename > tmp
