@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 				var lines = JSON.parse(xhr.response);
 				lines.forEach(function (line) {
-					document.getElementById('response').innerHTML += line.msg;
+					document.getElementById('response').innerHTML += line.msg + '<br/>';
 				})
 			} else {
 				// What do when the request fails
