@@ -15,66 +15,80 @@ const syntaxTree = require('./services/syntaxTree')
 
 const fileName = process.argv[2]
 
-expertSystem(fileName)
-displayLogs()
+if (fileName) {
+	let lines = readFile(fileName)
+	if (lines) {
+		expertSystem(lines)
+	}
+	displayLogs()
+}
 
-function expertSystem(fileName) {
+function expertSystem(lines) {
+	Logger.clear()
+	// rules = {}
+	Object.keys(facts).forEach(function(key) { delete facts[key]; });
+	rules.length = 0
+	facts.length = 0
+
+	displayLogs()
+	// displayFacts()
+	// displayRules()
+
+	let factSymbols = []
+	let conclusionFactSymbols = []
+	let trueFactSymbols = []
+	let queryFactSymbols = []
+
+	try {
+		parseLines (lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+	} catch(e) {
+		Logger.error('Error: ' + e);
+		return Logger.logs
+	}
+
+	// create subrules
+	rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
+
+	// assign keys and create facts from rules' conclusions
+	rules.forEach(rule => createFactFromRule(rule))
+
+	// create keys
+	rules.forEach(rule => {
+		syntaxTree.assignKeysToNodes(rule.conditionsTree)
+		syntaxTree.assignKeysToNodes(rule.conclusionTree)
+	})
+
+	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+
+	displayFacts()
+
+	evaluate()
+
+	displayFacts()
+
+	setRemainingFactsToFalse()
+
+	displayQueriedFacts()
+	displayLogs()
+	return Logger.logs
+}
+
+function readFile(fileName) {
 	if (fileName) {
 		let contents;
 		try {
-			contents = readFile(fileName)
+			contents = fs.readFileSync(fileName, 'utf8');
+			contents = contents.replace(/[ \t\v]+/ig, '');
+			let lines = contents.split(/\r?\n/)
+			return lines
 		} catch(e) {
 			Logger.error("Error: " + e.message)
 			return
 		}
 
-		let lines = contents.split(/\r?\n/)
-		let factSymbols = []
-		let conclusionFactSymbols = []
-		let trueFactSymbols = []
-		let queryFactSymbols = []
-
-		try {
-			parseLines (lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
-		} catch(e) {
-			Logger.error('Error: ' + e);
-			return
-		}
-
-		// create subrules
-		rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
-
-		// assign keys and create facts from rules' conclusions
-		rules.forEach(rule => createFactFromRule(rule))
-
-		// create keys
-		rules.forEach(rule => {
-			syntaxTree.assignKeysToNodes(rule.conditionsTree)
-			syntaxTree.assignKeysToNodes(rule.conclusionTree)
-		})
-
-		createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
-
-		displayFacts()
-
-		evaluate()
-
-		displayFacts()
-
-		setRemainingFactsToFalse()
-
-		displayQueriedFacts()
-
-
 	} else {
 		Logger.error('Please provide input file');
 	}
-}
-
-function readFile(fileName) {
-	contents = fs.readFileSync(fileName, 'utf8');
-	contents = contents.replace(/[ \t\v]+/ig, '');
-	return contents
 }
 
 function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
@@ -543,3 +557,5 @@ function displayLogs() {
 		}
 	})
 }
+
+module.exports.expertSystem = expertSystem

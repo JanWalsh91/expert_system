@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/JanWalsh91/expert_system#readme",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "nodemon": "^1.18.7"
   }

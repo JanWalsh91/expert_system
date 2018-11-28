@@ -7,6 +7,10 @@ const Logger = {
 
 	error: msg => {
 		 Logger.logs.push({msg, type: 'error'})
+	},
+
+	clear: () => {
+		Logger.logs = []
 	}
 
 }
