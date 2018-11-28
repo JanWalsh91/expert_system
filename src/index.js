@@ -1,7 +1,10 @@
 const fs = require('fs')
+
+// classes
 const Rule = require('./classes/Rule')
 const Fact = require('./classes/Fact')
 const Node = require('./classes/Node')
+const Logger = require('./classes/Logger')
 
 // data
 const rules = require('./rules')
@@ -11,161 +14,147 @@ const facts = require('./facts')
 const syntaxTree = require('./services/syntaxTree')
 
 const fileName = process.argv[2]
-if (fileName) {
-	let contents;
-	try {
-		contents = fs.readFileSync(fileName, 'utf8');
-	} catch(e) {
-		console.error("Error: " + e.message)
-		return
+
+expertSystem(fileName)
+displayLogs()
+
+function expertSystem(fileName) {
+	if (fileName) {
+		let contents;
+		try {
+			contents = readFile(fileName)
+		} catch(e) {
+			Logger.error("Error: " + e.message)
+			return
+		}
+
+		let lines = contents.split(/\r?\n/)
+		let factSymbols = []
+		let conclusionFactSymbols = []
+		let trueFactSymbols = []
+		let queryFactSymbols = []
+
+		try {
+			parseLines (lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+		} catch(e) {
+			Logger.error('Error: ' + e);
+			return
+		}
+
+		// create subrules
+		rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
+
+		// assign keys and create facts from rules' conclusions
+		rules.forEach(rule => createFactFromRule(rule))
+
+		// create keys
+		rules.forEach(rule => {
+			syntaxTree.assignKeysToNodes(rule.conditionsTree)
+			syntaxTree.assignKeysToNodes(rule.conclusionTree)
+		})
+
+		createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+
+		displayFacts()
+
+		evaluate()
+
+		displayFacts()
+
+		setRemainingFactsToFalse()
+
+		displayQueriedFacts()
+
+
+	} else {
+		Logger.error('Please provide input file');
 	}
+}
 
+function readFile(fileName) {
+	contents = fs.readFileSync(fileName, 'utf8');
 	contents = contents.replace(/[ \t\v]+/ig, '');
+	return contents
+}
 
-	let lines = contents.split(/\r?\n/)
-
-	let factSymbols = []
-	let conclusionFactSymbols = []
-	let trueFactSymbols = []
-	let queryFactSymbols = []
+function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
 
 	let hasRules, hasInitialFacts, hasQueries = false
 
-	try {
-		lines.forEach(line => {
-			line = line.split('#')[0]
-			if (line.length == 0) return
+	lines.forEach(line => {
+		line = line.split('#')[0]
+		if (line.length == 0) return
 
-			if (line[0] == '=') {
-				for (let i = 1; i < line.length; i++) {
-					let key = line.charAt(i)
-					if (!key.match(/^[A-Z]+$/)) {
-						throw 'Invalid initial fact'
-					}
-					trueFactSymbols.push(key)
-					if (facts[key] == undefined) {
-						facts[key] = new Fact({key: key, state: true})
-					}
+		if (line[0] == '=') {
+			for (let i = 1; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (!key.match(/^[A-Z]+$/)) {
+					throw 'Invalid initial fact'
 				}
-				if (hasInitialFacts) {
-					throw 'Can only have one set of initial facts'
+				trueFactSymbols.push(key)
+				if (facts[key] == undefined) {
+					facts[key] = new Fact({key: key, state: true})
 				}
-				if (line[1] != undefined)
-					hasInitialFacts = true
-			} else if (line[0] == '?') {
-				for (let i = 1; i < line.length; i++) {
-					let key = line.charAt(i)
-					if (!key.match(/^[A-Z]+$/)) {
-						throw 'Invalid query'
-					}
-					queryFactSymbols.push(key)
-					if (facts[key] == undefined) {
-						facts[key] = new Fact({key: key, query: true})
-					} else {
-						facts[key].query = true
-					}
-				}
-				if (hasQueries) {
-					throw 'Can only have one set of queries'
-				}
-				if (line[1] != undefined)
-					hasQueries = true
-			} else if (line.includes('=>')) {
-				let isConclusion = false
-				if (line.includes('<=>')) {
-					isConclusion = true
-				}
-				for (let i = 0; i < line.length; i++) {
-					let key = line.charAt(i)
-					if (key.match(/^[A-Z]+$/)) {
-						factSymbols.push(key)
-						if (isConclusion) {
-							conclusionFactSymbols.push(key)
-						}
-					}
-					if (key == '=') isConclusion = true
-				}
-				let ret
-				try {
-					ret = Rule.createFromString(line)
-				} catch (e) {
-					throw 'Rule creation failed: ' + e + ' "' + line + '"'
-				}
-				if (ret instanceof Array) {
-					rules.push(...ret)
-				} else {
-					rules.push(ret)
-				}
-				hasRules = true
 			}
-		})
-	} catch(e) {
-		console.error('Error: ' + e);
-		// console.log(e);
-		return
-	}
-
-	if (!hasRules) {
-		console.error('Error: Needs at least one rule')
-		return
-	}
-	// else if (!hasInitialFacts) {
-	// 	console.error('Error: Needs at least one initial fact')
-	// 	return
-	// }
-	else	if (!hasQueries) {
-		console.error('Error: Needs at least one query')
-		return
-	}
-
-	// create subrules
-	rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
-
-	// assign keys and create facts from rules' conclusions
-	rules.forEach(rule => createFactFromRule(rule))
-
-	// create keys
-	rules.forEach(rule => {
-		syntaxTree.assignKeysToNodes(rule.conditionsTree)
-		syntaxTree.assignKeysToNodes(rule.conclusionTree)
+			if (hasInitialFacts) {
+				throw 'Can only have one set of initial facts'
+			}
+			if (line[1] != undefined)
+				hasInitialFacts = true
+		} else if (line[0] == '?') {
+			for (let i = 1; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (!key.match(/^[A-Z]+$/)) {
+					throw 'Invalid query'
+				}
+				queryFactSymbols.push(key)
+				if (facts[key] == undefined) {
+					facts[key] = new Fact({key: key, query: true})
+				} else {
+					facts[key].query = true
+				}
+			}
+			if (hasQueries) {
+				throw 'Can only have one set of queries'
+			}
+			if (line[1] != undefined)
+				hasQueries = true
+		} else if (line.includes('=>')) {
+			let isConclusion = false
+			if (line.includes('<=>')) {
+				isConclusion = true
+			}
+			for (let i = 0; i < line.length; i++) {
+				let key = line.charAt(i)
+				if (key.match(/^[A-Z]+$/)) {
+					factSymbols.push(key)
+					if (isConclusion) {
+						conclusionFactSymbols.push(key)
+					}
+				}
+				if (key == '=') isConclusion = true
+			}
+			let ret
+			try {
+				ret = Rule.createFromString(line)
+			} catch (e) {
+				throw 'Rule creation failed: ' + e + ' "' + line + '"'
+			}
+			if (ret instanceof Array) {
+				rules.push(...ret)
+			} else {
+				rules.push(ret)
+			}
+			hasRules = true
+		}
 	})
 
-	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
-
-	// createOppositeFacts()
-
-	displayFacts()
-	// displayRules()
-	// return
-	console.log('  ');
-
-	evaluate()
-
-	displayFacts()
-
-
-	for (let fact in facts) {
-		if (facts[fact].state == undefined) {
-			facts[fact].state = false
-		}
+	if (!hasRules) {
+		throw 'Needs at least one rule'
 	}
 
-	displayFacts()
-
-}
-
-function createOppositeFacts() {
-	for (let key in facts) {
-		if (key[0] == '!') {
-			// create new fact with rule: cond => cond
-			console.log(facts[key]);
-			let rule = new Rule({
-				conditionsTree: syntaxTree.duplicateNode(facts[key].rules[0].conclusionTree),
-				conclusionTree: syntaxTree.duplicateNode(facts[key].rules[0].conclusionTree)
-			})
-			facts[key].rules.push(rule)
-			rules.push(rule)
-		}
+	else	if (!hasQueries) {
+		throw 'Needs at least one query'
 	}
 }
 
@@ -173,9 +162,6 @@ function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, q
 	let falseFactSymbols = factSymbols.filter(el => {
 		return !conclusionFactSymbols.includes(el) && !trueFactSymbols.includes(el) && !queryFactSymbols.includes(el)
 	})
-
-	console.log(falseFactSymbols);
-
 	falseFactSymbols.forEach(key => {
 		facts[key] = (new Fact({key, state: false}))
 	})
@@ -238,8 +224,6 @@ function createSubrules(conditionsTree, conclusionTree) {
 	}
 	createSubrulesFromConclusionTree()
 	createSubrulesFromConditionsTree()
-
-
 
 	function createSubrulesFromConclusionTree() {
 		if (conclusionTree.type == 'OPERATOR')
@@ -398,9 +382,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 			else if (conditionsTree.value == '^')
 				handleXor()
 
-			function handleAnd() {
-				// console.log('dont expand');
-			}
+			function handleAnd() {}
 			function handleOr() {
 				let nodes = createNodeTreeCombinations(conditionsTree, 1)
 
@@ -414,10 +396,7 @@ function createSubrules(conditionsTree, conclusionTree) {
 					createSubrules(rule.conditionsTree, rule.conclusionTree)
 				})
 			}
-			function handleXor() {
-				// console.log('dont expand');
-			}
-
+			function handleXor() {}
 		}
 
 		function handleNot() {
@@ -442,13 +421,8 @@ function createSubrules(conditionsTree, conclusionTree) {
 					createSubrules(rule.conditionsTree, rule.conclusionTree)
 				})
 			}
-			function handleOr() {
-				// console.log('dont expand');
-			}
-			function handleXor() {
-				// console.log('dont expand');
-			}
-
+			function handleOr() {}
+			function handleXor() {}
 		}
 
 		function createNodeTreeCombinations(tree, min) {
@@ -503,24 +477,15 @@ function createSubrules(conditionsTree, conclusionTree) {
 					return increment(list, index - 1)
 				}
 			}
-
 		}
 	}
-
 }
 
 function createFactFromRule(rule) {
-	// console.log('== RULE ==');
-	// console.log('\t condition:');
-	// syntaxTree.displayTree(rule.conditionsTree)
-	// console.log('\t conclusion:');
-	// syntaxTree.displayTree(rule.conclusionTree)
-	console.log('createFactFromRule');
 	let key = syntaxTree.createKeyFromNode(rule.conclusionTree)
 	while (key[0] == '!') {
 		key = key.substring(1)
 	}
-	console.log('key: ' + key);
 	if (facts[key] == undefined) {
 		facts[key] = new Fact({key: key, rules: [rule]})
 	} else {
@@ -529,28 +494,52 @@ function createFactFromRule(rule) {
 }
 
 function evaluate() {
-	console.log('=== EVALUATE ===');
+	Logger.log('=== EVALUATE ===');
 	for (let key in facts) {
-		// if (facts[key].query) {
-			console.log('OUTER LOOP: evaluating fact ' + key);
-			facts[key].evaluate()
-			console.log('OUTER LOOP: evaluating fact ' + key + '  END');
-		// }
+		Logger.log('OUTER LOOP: evaluating fact ' + key);
+		facts[key].evaluate()
+		Logger.log('OUTER LOOP: evaluating fact ' + key + '  END');
 	}
 }
 
 function displayFacts() {
-	console.log('=== FACTS ===');
-	// console.log(facts);
-	for (let fact in facts) {
-		console.log(fact + ': ' + facts[fact].state)
-		// console.log(facts[fact].rules)
-		if (facts[fact].rules)
-			facts[fact].rules.forEach(rule => rule.display())
+	Logger.log('=== FACTS ===');
+	for (let key in facts) {
+		Logger.log(key + ': ' + facts[key].state)
+		if (facts[key].rules) {
+			facts[key].rules.forEach(rule => rule.display())
+		}
+	}
+}
+
+function displayQueriedFacts() {
+	Logger.log('=== Queried FACTS ===');
+	for (let key in facts) {
+		if (facts[key].query) {
+			Logger.log(key + ': ' + facts[key].state)
+		}
 	}
 }
 
 function displayRules() {
-	console.log('=== RULES ===');
+	Logger.log('=== RULES ===');
 	rules.forEach(rule => rule.display())
+}
+
+function setRemainingFactsToFalse() {
+	for (let key in facts) {
+		if (facts[key].state == undefined) {
+			facts[key].state = false
+		}
+	}
+}
+
+function displayLogs() {
+	Logger.logs.forEach(log => {
+		if (log.type == 'error') {
+			console.error(log.msg)
+		} else {
+			console.log(log.msg)
+		}
+	})
 }

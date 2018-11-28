@@ -1,12 +1,12 @@
 const facts = require('../facts')
+const Logger = require('./Logger')
 
 class Fact {
 	constructor(params) {
 		params = params || {}
 		let defaultParams = {
-			expression: '',
 			key: '',
-			state: undefined, // true, false, undefined
+			state: undefined, // true, false, undefined, ambiguous
 			rules: [],
 			error: false,
 			query: false,
@@ -45,31 +45,25 @@ class Fact {
 	}
 
 	evaluate() {
-		console.log('Evalutate fact ' + this.key);
+		Logger.log('Evalutate fact ' + this.key);
 		if (this.evaluating) {
-			console.log('is currently evaluating ' + this.key + ': return undefined');
+			Logger.log('is currently evaluating ' + this.key + ': return undefined');
 			return undefined
 		}
 
-		// TODO: consider removing.
-		// TODO: only do if all rules haev been satisfiyed (confirmed)
-		if (this.state != undefined) {
-			console.log(this.key + ' state already set to ' + this.state + ': return ' + this.state);
+		if (this.state != undefined && this.rules.every(rule => rule.state != undefined)) {
+			Logger.log(this.key + ' state already set to ' + this.state + ': return ' + this.state);
 			return this.state
 		}
 
 		let results = this.rules.map(rule => {
-			console.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key);
+			Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key);
 			this.evaluating = true
 			let ret = rule.evaluate()
 			this.evaluating = false
-			console.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' END');
-			console.log('ret : '  + ret);
+			Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' END');
 
-
-
-
-			if (ret == true && rule.conclusionTree.key[0] == '|') {
+			if (ret == true && (rule.conclusionTree.key[0] == '|' || rule.conclusionTree.key[0] == '^')) {
 				rule.conclusionTree.children.forEach(child => {
 					if (facts[Fact.getRootKey(child.key)].state == undefined) {
 						facts[Fact.getRootKey(child.key)].state = 'ambiguous'
@@ -79,30 +73,21 @@ class Fact {
 			return ret
 		})
 
-		console.log('rule results 1: ');
-		console.log(results);
-
 		results = results.map((result, i) => {
 			if (result != true) return undefined
 			else {
 				let switchValue = false
 				let key = this.rules[i].conclusionTree.key
-				console.log('key: ' + key);
 				while (key[0] == '!') {
 					key = key.substring(1)
 					switchValue = !switchValue
 				}
-				console.log('i: ' + i + ' switch valeu: ' + switchValue);
 				return switchValue ? !result : result
 			}
 		})
 
-		console.log('rule results 2: ');
-		console.log(results);
-
 		this.error = false
 		if (results.length == 0) {
-			// this.state == undefined
 			this.state == false
 		} else {
 			let hasUndefined = results.some(result => result === undefined)
@@ -114,6 +99,7 @@ class Fact {
 			} else if (!hasTrue && hasFalse) {
 				this.state = false
 			} else if (hasTrue && hasFalse) {
+				// TODO: set contradiction
 				this.state = undefined
 				this.error = true
 				// let indices = results.map((res, i) => {
@@ -121,18 +107,12 @@ class Fact {
 				// 		return i
 				// 	}
 				// })
-				console.log('CONTRADICK');
-				// console.log('contraditcting rules: ' + indices);
+				Logger.log('CONTRADICK');
 			} else if (!hasTrue && !hasFalse) {
 				this.state = undefined
 			}
-			console.log('SET ' + this.key + ' to ' + this.state);
+			Logger.log('SET ' + this.key + ' to ' + this.state);
 		}
-		// else {
-		// 	this.state = undefined
-		// 	this.error = 'conflicting rules'
-		// }
-		// console.log('SET ' + this.key + ' to ' + this.state);
 		return this.state
 	}
 }

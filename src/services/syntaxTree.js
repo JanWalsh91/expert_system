@@ -24,7 +24,7 @@ function displayTree(node, depth) {
 	for (let i = 0; i < depth; i++) {
 		process.stdout.write("  ");
 	}
-	console.log(node.value + ' : '+ node.key);
+	Logger.log(node.value + ' : '+ node.key);
 	node.children.forEach(child => {
 		displayTree(child, depth + 1)
 	})
@@ -36,13 +36,9 @@ function isTreeValid(node) {
 			throw `Node "${node.value}" requires at least two children`
 		}
 	} else if (node.type == 'NOT') {
-		// displayTree(node)
 		if (node.children.length != 1) {
 			throw `Node "${node.value}" requires exactly one child`
 		}
-		// if (node.children[0].type == 'NOT') {
-		// 	throw 'Cannot have two "!" in a row'
-		// }
 	} else if (node.type == 'OPERAND') {
 		if (node.children.length > 0) {
 			throw `Node "${node.value}" cannot have children`
@@ -132,12 +128,6 @@ function tokenize(exp) {
 }
 
 function createTree(tokens) {
-
-	// const op = {
-	// 	'+': 1,
-	// 	'|': 1,
-	// 	'^': 2
-	// }
 	const op = {
 		'(': 5,
 		')': 5,
@@ -188,15 +178,9 @@ function createTree(tokens) {
 				}
 				break
 			case 'OPERATOR':
-				// console.log('found OPERATOR');
-				// console.log('currentNode: ' + currentNode.value);
-
 				if (currentNode.type == 'NOT') {
-					// console.log('test');
 					while (currentNode.type == 'NOT' && currentNode.parent != null) {
-						// console.log('going up');
 						currentNode = currentNode.parent
-						// console.log('currentNode: ' + currentNode.value);
 					}
 				}
 				if (currentNode.type == null) {
@@ -205,7 +189,6 @@ function createTree(tokens) {
 					break
 				}
 				if (currentNode.type == 'OPERATOR') {
-					// console.log('currentNode: ' + currentNode.value);
 					if (tokens[i].value == currentNode.value) {
 						break
 					}
@@ -251,7 +234,6 @@ function createTree(tokens) {
 				}
 				break;
 			case 'NOT':
-				// console.log('found not');
 				if (i + 1 >= tokens.length) throw '"!" must be followed by something'
 				if (tokens[i + 1].type == 'OPERATOR') throw '"!" cannot be followed by an operator'
 
@@ -260,15 +242,9 @@ function createTree(tokens) {
 				newNode.parent = currentNode
 				currentNode = newNode
 
-				// displayTree(root)
-
 				break;
 		}
 	}
-
-	// console.log('===');
-	// displayTree(root)
-	// console.log('===');
 
 	while (root.value == null) {
 		if (root.children.length > 1) {
@@ -332,7 +308,6 @@ const syntaxTree = {
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
 		orderNode(tree)
-		// syntaxTree.displayTree(tree)
 		return tree
 	},
 

@@ -15,6 +15,3 @@
 
 
 # - rework operator priorities
-- better check of OR nodes (check all combinations)
-- handle negation in conclusion
-- check if there are more ways to extrapolate new rules from current rules
