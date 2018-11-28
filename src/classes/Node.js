@@ -1,4 +1,5 @@
 const facts = require('../facts')
+const Fact = require('./Fact')
 
 class Node {
 	constructor(token) {
@@ -22,31 +23,12 @@ class Node {
 
 	evaluate() {
 		console.log('Evaluate node ' + this.key);
-		if (facts[this.key] != undefined) {
-			console.log(this.key + ' : ' + facts[this.key].state);
-			if (facts[this.key].state != undefined) {
-				return facts[this.key].state
-			} else {
-				return facts[this.key].evaluate()
-			}
-		} else {
-			if (this.key.charAt(0) != '!' && facts['!' + this.key] != undefined) {
-				console.log('====================================1');
-				if (facts['!' + this.key].state != undefined) {
-					return facts['!' + this.key].state
-				} else {
-					return facts['!' + this.key].evaluate()
-				}
-			} else if (this.key.charAt(0) == '!' && facts[this.key.substr(1)] != undefined) {
-				console.log('====================================2 ' + facts[this.key.substr(1)].state);
-
-				if (facts[this.key.substr(1)].state != undefined) {
-					return !facts[this.key.substr(1)].state
-				} else {
-					let res = facts[this.key.substr(1)].evaluate()
-					return res == undefined ? undefined : !res
-				}
-			}
+		if (Fact.keyExists(this.key)) {
+			// console.log(this.key + ' : ' + facts[this.key].state);
+			// if (facts[this.key].state != undefined) {
+			// 	return facts[this.key].state
+			// }
+			return Fact.evaluate(this.key)
 		}
 		console.log('node ' + this.key + ' not in facts');
 		let results

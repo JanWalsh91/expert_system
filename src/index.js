@@ -132,11 +132,17 @@ if (fileName) {
 
 	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
 
-	// displayFacts()
-	displayRules()
+	// createOppositeFacts()
+
+	displayFacts()
+	// displayRules()
+	// return
 	console.log('  ');
 
 	evaluate()
+
+	displayFacts()
+
 
 	for (let fact in facts) {
 		if (facts[fact].state == undefined) {
@@ -146,6 +152,21 @@ if (fileName) {
 
 	displayFacts()
 
+}
+
+function createOppositeFacts() {
+	for (let key in facts) {
+		if (key[0] == '!') {
+			// create new fact with rule: cond => cond
+			console.log(facts[key]);
+			let rule = new Rule({
+				conditionsTree: syntaxTree.duplicateNode(facts[key].rules[0].conclusionTree),
+				conclusionTree: syntaxTree.duplicateNode(facts[key].rules[0].conclusionTree)
+			})
+			facts[key].rules.push(rule)
+			rules.push(rule)
+		}
+	}
 }
 
 function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
@@ -494,9 +515,12 @@ function createFactFromRule(rule) {
 	// syntaxTree.displayTree(rule.conditionsTree)
 	// console.log('\t conclusion:');
 	// syntaxTree.displayTree(rule.conclusionTree)
-
+	console.log('createFactFromRule');
 	let key = syntaxTree.createKeyFromNode(rule.conclusionTree)
-
+	while (key[0] == '!') {
+		key = key.substring(1)
+	}
+	console.log('key: ' + key);
 	if (facts[key] == undefined) {
 		facts[key] = new Fact({key: key, rules: [rule]})
 	} else {
@@ -506,10 +530,12 @@ function createFactFromRule(rule) {
 
 function evaluate() {
 	console.log('=== EVALUATE ===');
-	for (let fact in facts) {
-		console.log('OUTER LOOP: evaluating fact ' + fact);
-		facts[fact].evaluate()
-		console.log('OUTER LOOP: evaluating fact ' + fact + '  END');
+	for (let key in facts) {
+		// if (facts[key].query) {
+			console.log('OUTER LOOP: evaluating fact ' + key);
+			facts[key].evaluate()
+			console.log('OUTER LOOP: evaluating fact ' + key + '  END');
+		// }
 	}
 }
 
@@ -519,6 +545,8 @@ function displayFacts() {
 	for (let fact in facts) {
 		console.log(fact + ': ' + facts[fact].state)
 		// console.log(facts[fact].rules)
+		if (facts[fact].rules)
+			facts[fact].rules.forEach(rule => rule.display())
 	}
 }
 

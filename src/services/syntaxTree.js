@@ -36,12 +36,13 @@ function isTreeValid(node) {
 			throw `Node "${node.value}" requires at least two children`
 		}
 	} else if (node.type == 'NOT') {
+		// displayTree(node)
 		if (node.children.length != 1) {
 			throw `Node "${node.value}" requires exactly one child`
 		}
-		if (node.children[0].type == 'NOT') {
-			throw 'Cannot have two "!" in a row'
-		}
+		// if (node.children[0].type == 'NOT') {
+		// 	throw 'Cannot have two "!" in a row'
+		// }
 	} else if (node.type == 'OPERAND') {
 		if (node.children.length > 0) {
 			throw `Node "${node.value}" cannot have children`
@@ -177,22 +178,34 @@ function createTree(tokens) {
 				}
 				break
 			case 'OPERAND':
-				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/) || tokens[i - 1].value == '!')) {
-					throw 'Missing operator'
+				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/))) {
+					throw 'Two operands cannot be in a row'
 				}
-				if (currentNode.type == null || currentNode.type == 'OPERATOR') {
+				if (currentNode.type == null || currentNode.type == 'OPERATOR' || currentNode.type == 'NOT') {
 					let node = new Node(tokens[i])
 					currentNode.children.push(node)
 					node.parent = currentNode
 				}
 				break
 			case 'OPERATOR':
+				// console.log('found OPERATOR');
+				// console.log('currentNode: ' + currentNode.value);
+
+				if (currentNode.type == 'NOT') {
+					// console.log('test');
+					while (currentNode.type == 'NOT' && currentNode.parent != null) {
+						// console.log('going up');
+						currentNode = currentNode.parent
+						// console.log('currentNode: ' + currentNode.value);
+					}
+				}
 				if (currentNode.type == null) {
 					currentNode.type = tokens[i].type
 					currentNode.value = tokens[i].value
 					break
 				}
 				if (currentNode.type == 'OPERATOR') {
+					// console.log('currentNode: ' + currentNode.value);
 					if (tokens[i].value == currentNode.value) {
 						break
 					}
@@ -238,27 +251,24 @@ function createTree(tokens) {
 				}
 				break;
 			case 'NOT':
+				// console.log('found not');
 				if (i + 1 >= tokens.length) throw '"!" must be followed by something'
-				if (tokens[i + 1].type == 'OPERAND') {
-					if (currentNode.type == null || currentNode.type == 'OPERATOR') {
-						let node = new Node(tokens[i + 1])
-						node.value = '!' + node.value
-						currentNode.children.push(node)
-						node.parent = currentNode
-					}
-					i++
-				}
-				else if (tokens[i + 1].type == 'OPEN_PARENTHESES') {
-					let node = new Node(tokens[i])
-					currentNode.children.push(node)
-					node.parent = currentNode
-					currentNode = node
-				} else {
-					throw '"!" must be followed by "(" or an operand'
-				}
+				if (tokens[i + 1].type == 'OPERATOR') throw '"!" cannot be followed by an operator'
+
+				let newNode = new Node(tokens[i])
+				currentNode.children.push(newNode)
+				newNode.parent = currentNode
+				currentNode = newNode
+
+				// displayTree(root)
+
 				break;
 		}
 	}
+
+	// console.log('===');
+	// displayTree(root)
+	// console.log('===');
 
 	while (root.value == null) {
 		if (root.children.length > 1) {

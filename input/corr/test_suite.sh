@@ -3,7 +3,7 @@
 for filename in cor*.es
 do
 		fail=false
-    node ../src/index.js $filename > tmp
+    node ../../src/index.js $filename > tmp
 		while read -r line; do
 			res=`grep "$line" tmp`
 			if [ -z "$res" ]
