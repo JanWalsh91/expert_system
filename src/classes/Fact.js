@@ -10,7 +10,8 @@ class Fact {
 			rules: [],
 			error: false,
 			query: false,
-			evaluating: false
+			evaluating: false,
+			// initialFact: false
 		}
 		params = {
 			...defaultParams,
@@ -48,6 +49,10 @@ class Fact {
 		Logger.log('Evalutate fact ' + this.key);
 		if (this.evaluating) {
 			Logger.log('is currently evaluating ' + this.key + ': return undefined');
+			return undefined
+		}
+
+		if (this.error == 'contradition') {
 			return undefined
 		}
 
@@ -90,36 +95,35 @@ class Fact {
 		if (results.length == 0) {
 			this.state == false
 		} else {
+			const foundContradition = () => {
+				Logger.log('Contradition in fact ' + this.key)
+				if (this.state == true || this.state == false) {
+					Logger.log('- Initial fact: ' + this.state)
+				}
+				this.rules.forEach(rule => {
+					Logger.log('- Rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' is true')
+				})
+				this.error = 'contradiction'
+				this.state = undefined
+			}
+			
 			let hasUndefined = results.some(result => result === undefined)
 			let hasTrue = results.some(result => result === true)
 			let hasFalse = results.some(result => result === false)
 
-			if (hasTrue && !hasFalse) {
-				if (this.state == false) {
-					Logger.log('CONTRADICK');
-					throw 'contradiction'
-				}
+			if ((this.state == false && hasTrue) ||
+				(this.state == true && hasFalse) ||
+				(hasTrue && hasFalse)) {
+				foundContradition()
+			} else if (hasTrue) {
 				this.state = true
-			} else if (!hasTrue && hasFalse) {
-				if (this.state == true) {
-					Logger.log('CONTRADICK');
-					throw 'contradiction'
-				}
+				Logger.log('SET ' + this.key + ' to ' + this.state);
+			} else if (hasFalse) {
 				this.state = false
-			} else if (hasTrue && hasFalse) {
-				// TODO: set contradiction
-				this.state = undefined
-				this.error = true
-				// let indices = results.map((res, i) => {
-				// 	if (res == true || res == false) {
-				// 		return i
-				// 	}
-				// })
-				Logger.log('CONTRADICK');
-			} else if (!hasTrue && !hasFalse) {
-				this.state = undefined
+				Logger.log('SET ' + this.key + ' to ' + this.state);
 			}
-			Logger.log('SET ' + this.key + ' to ' + this.state);
+			Logger.log(this.key + ': ' + this.state);
+			
 		}
 		return this.state
 	}

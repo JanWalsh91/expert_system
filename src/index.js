@@ -574,8 +574,13 @@ function displayRules() {
 }
 
 function setRemainingFactsToFalse() {
+	console.log('================================ AAAAAAAAAA8AA')
 	for (let key in facts) {
-		if (facts[key].state == undefined) {
+		console.log('fact: ' + key)
+		console.log(facts[key])
+		if (!!facts[key].error) {
+			facts[key].state = undefined
+		} else if (facts[key].state == undefined) {
 			facts[key].state = false
 		}
 	}
