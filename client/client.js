@@ -6,8 +6,11 @@ document.addEventListener("DOMContentLoaded", function() {
 	var queriesDiv = document.getElementById('queries');
 	var fileNameInput = document.getElementById('file_name_input');
 	var fakeFileNameInput = document.getElementById('file_name_input_fake');
+	var spanFileName = document.getElementById('file_name');
 
-	var factSet = new Set()
+	var factSet = new Set();
+
+	updateCheckboxes();
 
 	document.getElementById('send').addEventListener("click", expertSystem);
 
@@ -36,11 +39,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
 				if (obj.error) {
 					console.log('Ooooh')
+					obj.logs.forEach(function (line) {
+						if (line.type == 'error') {
+							logsDiv.classList.add('error')
+							logsDiv.innerHTML += line.msg + '<br/>';
+						}
+					})
 				} else {
+					logsDiv.classList.remove('error')
 					obj.logs.forEach(function (line) {
 						logsDiv.innerHTML += line.msg + '<br/>';
 					})
 					// factList = obj.facts;
+					updateQueries(obj.facts);
 					// updateCheckboxes()
 					// return queries and
 					// TODO updateQueries
@@ -63,8 +74,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		reader.onload = function(event) {
 			esTextArea.value += event.target.result;
 			updateCheckboxes();
+			expertSystem();
 		}
 		reader.readAsText(file)
+		spanFileName.innerHTML = file.name
 	}
 
 	function updateTextArea() {
@@ -212,19 +225,34 @@ document.addEventListener("DOMContentLoaded", function() {
 			// label.htmlFor = checkbox.id;
 			label.appendChild(document.createTextNode(fact.key));
 
-			label.appendChild(checkbox)
-			label.appendChild(span)
+			label.appendChild(checkbox);
+			label.appendChild(span);
 
-			factsDiv.appendChild(label)
+			factsDiv.appendChild(label);
 
-			if (fact.query == true) {
-				var span = document.createElement('span');
-				span.innerHTML = fact.key + ' is ' + fact.state 
-				queriesDiv.appendChild(span)
-			}
+			// if (fact.query == true) {
+			// 	var span = document.createElement('span');
+			// 	span.innerHTML = fact.key + ' is ' + fact.state 
+			// 	queriesDiv.appendChild(span)
+			// }
 		})
 
-		console.log('updateCheckboxes ==== END')
-		console.log(esTextArea.value)
+		console.log('updateCheckboxes ==== END');
+		console.log(esTextArea.value);
+	}
+
+	function updateQueries(facts) {
+		facts.forEach(function(fact) {
+			if (fact.query == true) {
+				console.log(fact);
+				var span = document.createElement('span');
+				span.innerHTML = fact.key + ' is ' + fact.state;
+				if (!!fact.error) {
+					span.innerHTML += ' (' + fact.error + ')';
+					span.classList = 'error'
+				}
+				queriesDiv.appendChild(span);
+			}
+		})
 	}
 });

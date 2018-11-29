@@ -61,16 +61,6 @@ function expertSystem(lines) {
 	
 	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols)
 
-	ret.facts = []
-	for (key in facts) {
-		if (key.length == 1) {
-			ret.facts.push({key, state: facts[key].state, query: facts[key].query})
-		}
-	}
-	ret.facts = ret.facts.sort(function(a, b) {
-		return a.key.charCodeAt(0) - b.key.charCodeAt(0)
-	})
-
 	displayFacts()
 
 	evaluate()
@@ -85,12 +75,27 @@ function expertSystem(lines) {
 }
 
 function createClientObject(ret, error) {
+	console.log('createClienObject')
 	ret.logs = Logger.logs
 	if (error) {
 		ret.error = error
 	} else {
 		ret.error = false
 	}
+	ret.facts = []
+	for (key in facts) {
+		if (key.length == 1) {
+			ret.facts.push({
+				key,
+				state: facts[key].state,
+				query: facts[key].query,
+				error: facts[key].error
+			})
+		}
+	}
+	ret.facts = ret.facts.sort(function(a, b) {
+		return a.key.charCodeAt(0) - b.key.charCodeAt(0)
+	})
 	console.log(ret)
 	return ret
 }
@@ -563,7 +568,8 @@ function displayQueriedFacts() {
 	Logger.log('=== Queried FACTS ===');
 	for (let key in facts) {
 		if (facts[key].query) {
-			Logger.log(key + ': ' + facts[key].state)
+			console.log('ERROR ' + facts[key].error)
+			Logger.log(`${key} : ${facts[key].state}${facts[key].error ? (' (' + facts[key].error) + ')' : ''}`)
 		}
 	}
 }

@@ -30,6 +30,8 @@ body > * {
 	max-height: 45vh;
 	padding: 10px;
 	font-family: 'Chakra Petch', sans-serif;
+	border: solid 1px lightgrey;
+	resize: none;
 }
 
 #buttonWrapper {
@@ -98,6 +100,10 @@ input[type="button"]:active {
 	font-size: 22px;
 }
 
+#queries .error, #logs.error {
+	color: #C62828;
+}
+
 /* checkbox */
 .checkbox-wrapper {
 	display: block;
@@ -110,6 +116,7 @@ input[type="button"]:active {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+	width: 20px;
 }
 
 /* Hide the browser's default checkbox */
@@ -138,7 +145,7 @@ input[type="button"]:active {
 
 /* When the checkbox is checked, add a blue background */
 .checkbox-wrapper input:checked ~ span, .checkbox-wrapper input:indeterminate ~ span {
-	background-color: #2196F3;
+	background-color: #1565C0;
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
@@ -174,3 +181,11 @@ input[type="button"]:active {
 	-ms-transform: rotate(45deg);
 	transform: rotate(45deg);
 }
+
+#file_name {
+	position: fixed;
+	bottom: 10px;
+	left: 10px;
+	color: grey;
+}
+

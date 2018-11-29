@@ -52,7 +52,7 @@ class Fact {
 			return undefined
 		}
 
-		if (this.error == 'contradition') {
+		if (this.error == 'contradiction') {
 			return undefined
 		}
 
