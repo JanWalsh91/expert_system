@@ -25,7 +25,7 @@ if (fileName) {
 
 function expertSystem(lines) {
 	Logger.clear()
-	// rules = {}
+	let ret = {}
 	Object.keys(facts).forEach(function(key) { delete facts[key]; });
 	rules.length = 0
 	facts.length = 0
@@ -37,28 +37,39 @@ function expertSystem(lines) {
 	let factSymbols = []
 	let conclusionFactSymbols = []
 	let trueFactSymbols = []
+	let falseFactSymbols = []
 	let queryFactSymbols = []
 
 	try {
-		parseLines (lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+		parseLines (lines, factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols)
 	} catch(e) {
 		Logger.error('Error: ' + e);
-		return Logger.logs
+		return createClientObject(ret, true)
 	}
-
+	
 	// create subrules
 	rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
-
+	
 	// assign keys and create facts from rules' conclusions
 	rules.forEach(rule => createFactFromRule(rule))
-
+	
 	// create keys
 	rules.forEach(rule => {
 		syntaxTree.assignKeysToNodes(rule.conditionsTree)
 		syntaxTree.assignKeysToNodes(rule.conclusionTree)
 	})
+	
+	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols)
 
-	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols)
+	ret.facts = []
+	for (key in facts) {
+		if (key.length == 1) {
+			ret.facts.push({key, state: facts[key].state})
+		}
+	}
+	ret.facts = ret.facts.sort(function(a, b) {
+		return a.key.charCodeAt(0) - b.key.charCodeAt(0)
+	})
 
 	displayFacts()
 
@@ -70,7 +81,18 @@ function expertSystem(lines) {
 
 	displayQueriedFacts()
 	displayLogs()
-	return Logger.logs
+	return createClientObject(ret, false)
+}
+
+function createClientObject(ret, error) {
+	ret.logs = Logger.logs
+	if (error) {
+		ret.error = error
+	} else {
+		ret.error = false
+	}
+	console.log(ret)
+	return ret
 }
 
 function readFile(fileName) {
@@ -91,7 +113,7 @@ function readFile(fileName) {
 	}
 }
 
-function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
+function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols) {
 
 	let hasRules, hasInitialFacts, hasQueries = false
 
@@ -102,6 +124,14 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 		if (line[0] == '=') {
 			for (let i = 1; i < line.length; i++) {
 				let key = line.charAt(i)
+				if (key == '!') {
+					if (!line.charAt(i + 1) || !line.charAt(i + 1).match(/^[A-Z]+$/)) {
+						throw 'Invalid initial fact'
+					}
+					falseFactSymbols.push(line.charAt(i + 1))
+					i++
+					continue
+				}
 				if (!key.match(/^[A-Z]+$/)) {
 					throw 'Invalid initial fact'
 				}
@@ -172,10 +202,10 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 	}
 }
 
-function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, queryFactSymbols) {
-	let falseFactSymbols = factSymbols.filter(el => {
+function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols) {
+	falseFactSymbols = falseFactSymbols.concat(factSymbols.filter(el => {
 		return !conclusionFactSymbols.includes(el) && !trueFactSymbols.includes(el) && !queryFactSymbols.includes(el)
-	})
+	}))
 	falseFactSymbols.forEach(key => {
 		facts[key] = (new Fact({key, state: false}))
 	})

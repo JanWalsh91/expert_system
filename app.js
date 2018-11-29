@@ -13,7 +13,8 @@ app.get('/', (req, res) => {
 })
 
 app.post('/', (req, res) => {
-	let lines = req.body.es_text.replace(/[ \t\v]+/ig, '');
+	console.log(req.body)
+	let lines = req.body.esText.replace(/[ \t\v]+/ig, '');
 	lines = lines.split(/\r?\n/)
 	var ret = expertSystem.expertSystem(lines)
 	res.send(ret)
