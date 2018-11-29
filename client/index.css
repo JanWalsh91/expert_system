@@ -1,0 +1,176 @@
+body, html {
+	background: #fafafa;
+	font-family: 'Roboto', sans-serif;
+}
+
+body {
+	display: flex;
+	flex-direction: row;
+	/* justify-content: space-evenly; */
+}
+
+body > * {
+	margin: 10px;
+}
+
+#leftPanel {
+	display: flex;
+	flex-direction: column;
+}
+
+#rightPanel {
+	display: flex;
+	flex-grow: 1;
+}
+
+#es_text {
+	min-width: 35vw;
+	min-height: 20vh;
+	max-width: 50vw;
+	max-height: 45vh;
+	padding: 10px;
+	font-family: 'Chakra Petch', sans-serif;
+}
+
+#buttonWrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+}
+
+input[type="button"] {
+	border: none;
+	padding: 0px 40px;
+	background: #1565C0;
+	color: white;
+	font-size: 125%;
+	margin: 10px;
+	min-width: 200px;
+	min-height: 60px;
+	transition: 0.15s;
+	border-radius: 3px;
+}
+
+input[type="button"]:hover {
+	background: #0D47A1;
+}
+
+input[type="button"]:active {
+	font-size: 135%;
+}
+
+#file_name_input {
+	display: none;
+}
+
+#logs {
+	font-family: 'Roboto Mono', monospace;
+	border: solid lightgrey 1px;
+	width: 100%;
+	background: #212121;
+	color: #FAFAFA;
+	padding: 20px;
+	font-size: 90%;
+	line-height: 25px;
+	overflow-y: scroll;
+	max-height: 90vh;
+}
+
+#facts {
+	align-items: end;
+	border-right: solid 1px lightgrey;
+}
+
+#facts-wrapper {
+	display: flex;
+	flex-direction: row;
+}
+
+#facts-wrapper > * {
+	width: 50%;
+	display: flex;
+	flex-direction: column;
+	padding: 20px;
+}
+
+#queries {
+	font-size: 22px;
+}
+
+/* checkbox */
+.checkbox-wrapper {
+	display: block;
+	position: relative;
+	padding-left: 35px;
+	margin-bottom: 12px;
+	cursor: pointer;
+	font-size: 22px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbox-wrapper input {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+	height: 0;
+	width: 0;
+}
+
+/* Create a custom checkbox */
+.checkbox-wrapper span {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 25px;
+	width: 25px;
+	background-color: #eee;
+}
+
+/* On mouse-over, add a grey background color */
+.checkbox-wrapper:hover input ~ span {
+	background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.checkbox-wrapper input:checked ~ span, .checkbox-wrapper input:indeterminate ~ span {
+	background-color: #2196F3;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkbox-wrapper span:after {
+	content: "";
+	position: absolute;
+	display: none;
+}
+
+/* Show the checkmark when checked */
+.checkbox-wrapper input:checked ~ span:after, .checkbox-wrapper input:indeterminate ~ span:after {
+	display: block;
+}
+
+.checkbox-wrapper input:indeterminate ~ span:after {
+	left: 6px;
+	top: 1px;
+	width: 13px;
+	height: 10px;
+	border: solid white 1px;
+	border-width: 0 0 3px 0;
+}
+
+/* Style the checkmark/indicator */
+.checkbox-wrapper input:checked ~ span:after {
+	left: 9px;
+	top: 5px;
+	width: 5px;
+	height: 10px;
+	border: solid white 1px;
+	border-width: 0 3px 3px 0;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}

@@ -64,7 +64,7 @@ function expertSystem(lines) {
 	ret.facts = []
 	for (key in facts) {
 		if (key.length == 1) {
-			ret.facts.push({key, state: facts[key].state})
+			ret.facts.push({key, state: facts[key].state, query: facts[key].query})
 		}
 	}
 	ret.facts = ret.facts.sort(function(a, b) {
@@ -196,8 +196,7 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 	if (!hasRules) {
 		throw 'Needs at least one rule'
 	}
-
-	else	if (!hasQueries) {
+	else if (!hasQueries) {
 		throw 'Needs at least one query'
 	}
 }
@@ -207,7 +206,11 @@ function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, f
 		return !conclusionFactSymbols.includes(el) && !trueFactSymbols.includes(el) && !queryFactSymbols.includes(el)
 	}))
 	falseFactSymbols.forEach(key => {
-		facts[key] = (new Fact({key, state: false}))
+		let query = false
+		if (facts[key] != undefined) {
+			query = facts[key].query
+		}
+		facts[key] = (new Fact({key, state: false, query}))
 	})
 }
 

@@ -95,8 +95,16 @@ class Fact {
 			let hasFalse = results.some(result => result === false)
 
 			if (hasTrue && !hasFalse) {
+				if (this.state == false) {
+					Logger.log('CONTRADICK');
+					throw 'contradiction'
+				}
 				this.state = true
 			} else if (!hasTrue && hasFalse) {
+				if (this.state == true) {
+					Logger.log('CONTRADICK');
+					throw 'contradiction'
+				}
 				this.state = false
 			} else if (hasTrue && hasFalse) {
 				// TODO: set contradiction
