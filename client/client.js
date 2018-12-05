@@ -52,7 +52,10 @@ document.addEventListener("DOMContentLoaded", function() {
 							logsDiv.innerHTML += '<p>' + line.msg + '</p>';
 						}
 					})
-				} else {
+				} else if (obj.srvError) {
+					logsDiv.classList.add('error')
+					logsDiv.innerHTML += '<p>Internal server error: ' + obj.srvError + '</p>';
+				}	else {
 					logsDiv.classList.remove('error')
 					obj.logs.forEach(function (line) {
 						var classes = ''
@@ -80,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		esTextArea.value = ""
 		reader.onload = function(event) {
 			if (event.target.result.length > 1000000) {
-				console.log('file too big');
+				console.error('file too big');
 				return ;
 			}
 			esTextArea.value += event.target.result;
@@ -146,8 +149,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			basicSet.add(letter)
 		})
 
-		basicSet.forEach(a => console.log(a))
-
 		// set Set with fact {key, state}
 		basicSet.forEach(function(fact) {
 			var index = initialFacts.indexOf(fact)
@@ -164,8 +165,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			}
 			factSet.add(obj)
 		});
-
-		factSet.forEach(a => console.log(a))
 
 		// create checkboxes based on set
 		factSet.forEach(function(fact) {

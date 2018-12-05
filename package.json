@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cd input/corr && sh test_suite.sh",
+    "server": "node app.js",
+    "server-dev": "node_modules/.bin/nodemon app.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +20,9 @@
   "homepage": "https://github.com/JanWalsh91/expert_system#readme",
   "dependencies": {
     "body-parser": "^1.18.3",
-    "express": "^4.16.4",
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
     "nodemon": "^1.18.7"
   }
 }

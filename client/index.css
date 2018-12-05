@@ -218,6 +218,17 @@ input[type="button"]:active {
 	top: 50%;
 	left: 50%;
 	padding: 25px;
+	opacity: 1;
+	-webkit-transition: opacity 0.2s;
+	transition: opacity 0.2s;
+	visibility: visible;
+}
+
+.tooltip.hide {
+	visibility: hidden;
+	opacity: 0;
+	-webkit-transition: opacity 0.2s;
+	transition: opacity 0.2s;
 }
 
 .tooltip .checkbox-wrapper {
@@ -233,8 +244,4 @@ input[type="button"]:active {
 	border-top: 10px solid transparent;
   border-bottom: 10px solid transparent;
   border-right:10px solid #1565C0;
-}
-
-.tooltip.hide {
-	display: none;
 }
