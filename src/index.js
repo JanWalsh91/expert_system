@@ -7,9 +7,6 @@ const Logger = require('./classes/Logger')
 
 let fileName = ''
 
-console.log(process.argv[0]);
-console.log(process.argv[1]);
-
 let verbose = false;
 for (let i = 2; i < process.argv.length; i++) {
 	switch (process.argv[i]) {
@@ -34,9 +31,7 @@ if (fileName) {
 	Logger.error('Error: Please provide input file');
 }
 
-if (error) {
-	displayLogs()
-}
+displayLogs()
 
 function readFile(fileName) {
 		let contents;

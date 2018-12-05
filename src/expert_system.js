@@ -56,7 +56,6 @@ function expertSystem(lines, verbose) {
 	setRemainingFactsToFalse()
 
 	displayQueriedFacts()
-	displayLogs()
 	return createClientObject(ret, false)
 }
 
