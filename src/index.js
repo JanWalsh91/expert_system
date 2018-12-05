@@ -13,13 +13,33 @@ const facts = require('./facts')
 // services
 const syntaxTree = require('./services/syntaxTree')
 
-const fileName = process.argv[2]
+let fileName = ''
 
+let verbose = false;
+for (let i = 2; i < process.argv.length; i++) {
+	switch (process.argv[i]) {
+		case '-v':
+			verbose = true;
+			break;
+		default:
+			fileName = process.argv[i]
+	}
+}
+
+let error = false
 if (fileName) {
 	let lines = readFile(fileName)
 	if (lines) {
-		expertSystem(lines)
+		expertSystem(lines, verbose)
+	} else {
+		error = true
 	}
+} else {
+	error = true;
+	Logger.error('Error: Please provide input file');
+}
+
+if (error) {
 	displayLogs()
 }
 
@@ -31,9 +51,6 @@ function expertSystem(lines, verbose) {
 	rules.length = 0
 	facts.length = 0
 
-	displayLogs()
-	// displayFacts()
-	// displayRules()
 
 	let factSymbols = []
 	let conclusionFactSymbols = []
@@ -76,7 +93,6 @@ function expertSystem(lines, verbose) {
 }
 
 function createClientObject(ret, error) {
-	console.log('createClienObject')
 	ret.logs = Logger.logs
 	if (error) {
 		ret.error = error
@@ -97,12 +113,10 @@ function createClientObject(ret, error) {
 	ret.facts = ret.facts.sort(function(a, b) {
 		return a.key.charCodeAt(0) - b.key.charCodeAt(0)
 	})
-	console.log(ret)
 	return ret
 }
 
 function readFile(fileName) {
-	if (fileName) {
 		let contents;
 		try {
 			contents = fs.readFileSync(fileName, 'utf8');
@@ -113,10 +127,6 @@ function readFile(fileName) {
 			Logger.error("Error: " + e.message)
 			return
 		}
-
-	} else {
-		Logger.error('Please provide input file');
-	}
 }
 
 function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols) {
@@ -144,6 +154,8 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 				trueFactSymbols.push(key)
 				if (facts[key] == undefined) {
 					facts[key] = new Fact({key: key, state: true})
+				} else {
+					facts[key].state = true
 				}
 			}
 			if (hasInitialFacts) {
@@ -549,9 +561,7 @@ function createFactFromRule(rule) {
 function evaluate() {
 	Logger.log('=== EVALUATE ===');
 	for (let key in facts) {
-		// Logger.log('OUTER LOOP: evaluating fact ' + key);
 		facts[key].evaluate()
-		// Logger.log('OUTER LOOP: evaluating fact ' + key + '  END');
 	}
 }
 
@@ -569,7 +579,6 @@ function displayQueriedFacts() {
 	Logger.log('=== Queried FACTS ===', false, true);
 	for (let key in facts) {
 		if (facts[key].query) {
-			// console.log('ERROR ' + facts[key].error)
 			Logger.log(`${key}: ${facts[key].state}${facts[key].error ? (' (' + facts[key].error) + ')' : ''}`, false, true)
 		}
 	}

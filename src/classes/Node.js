@@ -16,7 +16,7 @@ class Node {
 	}
 
 	static duplicate(node) {
-		if (!(node instanceof Node)) throw 'no bitch! ya can\'t do dat shit'
+		if (!(node instanceof Node)) throw 'Node duplication error'
 		let newNode =  new Node({value: node.value, type: node.type})
 		newNode.key = node.key
 		return newNode
@@ -33,7 +33,6 @@ class Node {
 			return ret
 		}
 
-		// Logger.log('node ' + this.key + ' not in facts');
 		let results
 		switch (this.type) {
 			case 'OPERATOR':

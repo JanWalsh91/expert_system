@@ -32,16 +32,12 @@ document.addEventListener("DOMContentLoaded", function() {
 	fileNameInput.addEventListener('change', readFile);
 
 	esTextArea.addEventListener('keyup', function(event) {
-		console.log('tadaaa');
 		updateCheckboxes();
 	});
 
 	function expertSystem() {
 		var esText = esTextArea.value;
-		console.log('ExertSystem:')
-		// console.log(esText)
 		logsDiv.innerHTML = "";
-		// factsDiv.innerHTML = ""
 		queriesDiv.innerHTML = ""
 		var xhr = new XMLHttpRequest();
 		xhr.onload = function () {
@@ -50,7 +46,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				var obj = JSON.parse(xhr.response);
 
 				if (obj.error) {
-					console.log('Error')
 					obj.logs.forEach(function (line) {
 						if (line.type == 'error') {
 							logsDiv.classList.add('error')
@@ -68,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function() {
 					updateQueries(obj.facts);
 				}
 			} else {
-				console.log('The request failed!');
+				console.error('The request failed!');
 			}
 		};
 
