@@ -1,8 +1,11 @@
 const Logger = {
 	logs: [],
+	verbose: false,
 
-	log: msg => {
-		 Logger.logs.push({msg, type: 'log'})
+	log: (msg, indent, override) => {
+		if (Logger.verbose || override) {
+			Logger.logs.push({msg, type: 'log', indent})
+		}
 	},
 
 	error: msg => {

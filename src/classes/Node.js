@@ -23,11 +23,17 @@ class Node {
 	}
 
 	evaluate() {
-		Logger.log('Evaluate node ' + this.key);
+		Logger.log('Evaluate node ' + this.key + ' - START');
 		if (Fact.keyExists(this.key)) {
 			return Fact.evaluate(this.key)
 		}
-		Logger.log('node ' + this.key + ' not in facts');
+
+		const logAndReturn = ret => {
+			Logger.log('Evaluate node ' + this.key + ': ' + ret + ' - END');
+			return ret
+		}
+
+		// Logger.log('node ' + this.key + ' not in facts');
 		let results
 		switch (this.type) {
 			case 'OPERATOR':
@@ -36,22 +42,22 @@ class Node {
 						results = this.children.map(child => child.evaluate())
 						var ret = (results.every(result => result === true))
 						var hasUndefined = (results.some(result => result === undefined))
-						if (hasUndefined) return undefined
-						else return ret
+						if (hasUndefined) return logAndReturn(undefined)
+						else return logAndReturn(ret)
 						break
 					case '|':
 						results = this.children.map(child => child.evaluate())
 						let hasTrue = (results.some(result => result === true))
 						hasUndefined = (results.some(result => result === undefined))
 						if (!hasTrue && hasUndefined) {
-							return undefined
+							return logAndReturn(undefined)
 						}
-						else return hasTrue
+						else return logAndReturn(hasTrue)
 						break
 					case '^':
 						results = this.children.map(child => child.evaluate())
-						if (results.some(result => result == undefined)) return undefined
-						return results[0] === !results[1]
+						if (results.some(result => result == undefined)) return logAndReturn(undefined)
+						return logAndReturn(results[0] === !results[1])
 						break
 				}
 				break
@@ -59,22 +65,22 @@ class Node {
 				if (this.value.charAt(0) == '!') {
 					if (facts[this.value.charAt(1)] != undefined) {
 						ret = facts[this.value.charAt(1)].evaluate()
-						if (ret === undefined) return undefined
-						return !ret
+						if (ret === undefined) return logAndReturn(undefined)
+						return logAndReturn(!ret)
 					}
-					return undefined
+					return logAndReturn(undefined)
 				} else {
 					if (facts['!' + this.value.charAt(0)] != undefined) {
 						ret = facts['!' + this.value.charAt(0)].evaluate()
-						if (ret === undefined) return undefined
-						return !ret
+						if (ret === undefined) return logAndReturn(undefined)
+						return logAndReturn(!ret)
 					}
 				}
 				break
 			case 'NOT':
 				ret = this.children[0].evaluate()
-				if (ret === undefined) return undefined
-				return !ret
+				if (ret === undefined) return logAndReturn(undefined)
+				return logAndReturn(!ret)
 				break
 			default:
 				throw 'Invalid type'

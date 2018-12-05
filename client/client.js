@@ -7,6 +7,18 @@ document.addEventListener("DOMContentLoaded", function() {
 	var fileNameInput = document.getElementById('file_name_input');
 	var fakeFileNameInput = document.getElementById('file_name_input_fake');
 	var spanFileName = document.getElementById('file_name');
+	var verboseInput = document.getElementById('verbose');
+	var tooltip = document.getElementById('tooltip');
+	var tooltip0 = document.getElementById('tooltip0');
+	var tooltip1 = document.getElementById('tooltip1');
+	var tooltip2 = document.getElementById('tooltip2');
+
+	tooltip0.indeterminate = false;
+	tooltip0.checked = false;
+	tooltip1.indeterminate = true;
+	tooltip1.checked = false;
+	tooltip2.indeterminate = false;
+	tooltip2.checked = true;
 
 	var factSet = new Set();
 
@@ -27,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	function expertSystem() {
 		var esText = esTextArea.value;
 		console.log('ExertSystem:')
-		console.log(esText)
+		// console.log(esText)
 		logsDiv.innerHTML = "";
 		// factsDiv.innerHTML = ""
 		queriesDiv.innerHTML = ""
@@ -38,23 +50,22 @@ document.addEventListener("DOMContentLoaded", function() {
 				var obj = JSON.parse(xhr.response);
 
 				if (obj.error) {
-					console.log('Ooooh')
+					console.log('Error')
 					obj.logs.forEach(function (line) {
 						if (line.type == 'error') {
 							logsDiv.classList.add('error')
-							logsDiv.innerHTML += line.msg + '<br/>';
+							logsDiv.innerHTML += '<p>' + line.msg + '</p>';
 						}
 					})
 				} else {
 					logsDiv.classList.remove('error')
 					obj.logs.forEach(function (line) {
-						logsDiv.innerHTML += line.msg + '<br/>';
+						var classes = ''
+						if (line.indent) classes += 'indent'
+						if (line.msg.startsWith('===')) classes += ' bold'
+						logsDiv.innerHTML += '<p class="' + classes + '">' + line.msg + '</p>';
 					})
-					// factList = obj.facts;
 					updateQueries(obj.facts);
-					// updateCheckboxes()
-					// return queries and
-					// TODO updateQueries
 				}
 			} else {
 				console.log('The request failed!');
@@ -63,15 +74,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		xhr.open('POST', 'http://localhost:8080/');
 		xhr.setRequestHeader("Content-Type", "application/json");
-		xhr.send(JSON.stringify({esText}));
+		xhr.send(JSON.stringify({esText, verbose: verbose.checked}));
 	}
 
 	function readFile (evt) {
 		var files = evt.target.files;
-		var file = files[0];           
+		var file = files[0];
+		if (file === undefined) return;
 		var reader = new FileReader();
 		esTextArea.value = ""
 		reader.onload = function(event) {
+			if (event.target.result.length > 1000000) {
+				console.log('file too big');
+				return ;
+			}
 			esTextArea.value += event.target.result;
 			updateCheckboxes();
 			expertSystem();
@@ -81,8 +97,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	}
 
 	function updateTextArea() {
-		console.log('updateTextArea')
-		console.log(esTextArea.value)
 		var lines = esTextArea.value.split('\n')
 		var newTextArea = '';
 		var foundInitialFactLine = false;
@@ -115,17 +129,11 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 
 		esTextArea.value = newTextArea;
-		console.log('updateTextArea === END')
-		console.log(esTextArea.value)
 	}
 
 	function updateCheckboxes() {
-		console.log('updateCheckboxes')
-
 		factsDiv.innerHTML = ""
 		queriesDiv.innerHTML = ""
-
-		console.log(esTextArea.value)
 		factSet.clear()
 
 		var lines = esTextArea.value.split('\n');
@@ -143,7 +151,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			basicSet.add(letter)
 		})
 
-		console.log('basic set: ')
 		basicSet.forEach(a => console.log(a))
 
 		// set Set with fact {key, state}
@@ -163,12 +170,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			factSet.add(obj)
 		});
 
-		console.log('fact set: ')
 		factSet.forEach(a => console.log(a))
 
-
 		// create checkboxes based on set
-
 		factSet.forEach(function(fact) {
 			var checkbox = document.createElement('input');
 			checkbox.type = "checkbox";
@@ -190,8 +194,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 			// Add event listener
 			checkbox.addEventListener('click', function(event) {
-				// console.log('Checked: ' + this.checked);
-				// console.log('Indeterminate: ' + this.indeterminate);
 				if (this.dataset.state == 0) {
 					this.indeterminate = false;
 					this.checked = true;
@@ -208,20 +210,17 @@ document.addEventListener("DOMContentLoaded", function() {
 					this.dataset.state = 0;
 					fact.state = undefined;
 				}
-				// console.log('Af Checked: ' + this.checked);
-				// console.log('Af Indeterminate: ' + this.indeterminate + '\n');
-
-				console.log(this)
-
 				updateTextArea();
 				expertSystem();
 			})
 
 			var span = document.createElement('span')
 			span.htmlFor = "fact_checkbox_" + fact.key;
-			
+
 			var label = document.createElement('label');
 			label.className = 'checkbox-wrapper';
+			label.addEventListener('mouseover', showTooltip);
+			label.addEventListener('mouseleave', hideTooltip);
 			// label.htmlFor = checkbox.id;
 			label.appendChild(document.createTextNode(fact.key));
 
@@ -230,21 +229,33 @@ document.addEventListener("DOMContentLoaded", function() {
 
 			factsDiv.appendChild(label);
 
-			// if (fact.query == true) {
-			// 	var span = document.createElement('span');
-			// 	span.innerHTML = fact.key + ' is ' + fact.state 
-			// 	queriesDiv.appendChild(span)
-			// }
-		})
+			var interval = null;
 
-		console.log('updateCheckboxes ==== END');
-		console.log(esTextArea.value);
+			function showTooltip (e) {
+				if (interval === null) {
+					interval = setInterval(function () {
+						tooltip.classList.remove('hide');
+						var left = e.target.getBoundingClientRect().left + e.target.offsetWidth;
+						var top = e.target.getBoundingClientRect().top + e.target.offsetHeight/2;
+						tooltip.style.left = (left + 10) + 'px';
+						tooltip.style.top = (top - tooltip.offsetHeight/2 - 5) + 'px';
+						clearInterval(interval);
+						interval = null;
+					}, 500);
+				}
+
+			}
+			function hideTooltip() {
+				clearInterval(interval);
+				interval = null;
+				tooltip.classList.add('hide');
+			}
+		})
 	}
 
 	function updateQueries(facts) {
 		facts.forEach(function(fact) {
 			if (fact.query == true) {
-				console.log(fact);
 				var span = document.createElement('span');
 				span.innerHTML = fact.key + ' is ' + fact.state;
 				if (!!fact.error) {

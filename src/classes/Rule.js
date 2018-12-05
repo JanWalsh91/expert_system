@@ -48,11 +48,13 @@ class Rule {
 	}
 
 	display() {
-		Logger.log(`Rule: ${this.conditionsTree.key} => ${this.conclusionTree.key}`);
+		Logger.log(`Rule: ${this.conditionsTree.key} => ${this.conclusionTree.key}`, true);
 	}
 
 	evaluate() {
+		Logger.log('Evaluate rule ' + this.conditionsTree.key + ' => ' + this.conclusionTree.key + ' - START');
 		this.state = this.conditionsTree.evaluate()
+		Logger.log('Evaluate rule ' + this.conditionsTree.key + ' => ' + this.conclusionTree.key + ' is ' + this.state + ' - END');
 		return this.state
 	}
 }

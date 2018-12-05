@@ -10,8 +10,7 @@ class Fact {
 			rules: [],
 			error: false,
 			query: false,
-			evaluating: false,
-			// initialFact: false
+			evaluating: false
 		}
 		params = {
 			...defaultParams,
@@ -46,27 +45,29 @@ class Fact {
 	}
 
 	evaluate() {
-		Logger.log('Evalutate fact ' + this.key);
+		Logger.log('Evaluate fact ' + this.key + ' - START');
 		if (this.evaluating) {
-			Logger.log('is currently evaluating ' + this.key + ': return undefined');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 			return undefined
 		}
 
 		if (this.error == 'contradiction') {
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 			return undefined
 		}
 
 		if (this.state != undefined && this.rules.every(rule => rule.state != undefined)) {
-			Logger.log(this.key + ' state already set to ' + this.state + ': return ' + this.state);
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
+			// Logger.log(this.key + ' state already set to ' + this.state + ': return ' + this.state);
 			return this.state
 		}
 
 		let results = this.rules.map(rule => {
-			Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key);
+			// Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key);
 			this.evaluating = true
 			let ret = rule.evaluate()
 			this.evaluating = false
-			Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' END');
+			// Logger.log('Evaulating rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' END');
 
 			if (ret == true && (rule.conclusionTree.key[0] == '|' || rule.conclusionTree.key[0] == '^')) {
 				rule.conclusionTree.children.forEach(child => {
@@ -96,17 +97,18 @@ class Fact {
 			this.state == false
 		} else {
 			const foundContradition = () => {
-				Logger.log('Contradition in fact ' + this.key)
-				if (this.state == true || this.state == false) {
-					Logger.log('- Initial fact: ' + this.state)
-				}
-				this.rules.forEach(rule => {
-					Logger.log('- Rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' is true')
-				})
+				// Logger.log('Contradition in fact ' + this.key)
+				// if (this.state == true || this.state == false) {
+					// Logger.log('- Initial fact: ' + this.state)
+				// }
+				// this.rules.forEach(rule => {
+				// 	Logger.log('- Rule ' + rule.conditionsTree.key + ' => ' + rule.conclusionTree.key + ' is true')
+				// })
 				this.error = 'contradiction'
 				this.state = undefined
+				Logger.log('SET ' + this.key + ' to: ' + this.state + ': contradition');
 			}
-			
+
 			let hasUndefined = results.some(result => result === undefined)
 			let hasTrue = results.some(result => result === true)
 			let hasFalse = results.some(result => result === false)
@@ -117,14 +119,14 @@ class Fact {
 				foundContradition()
 			} else if (hasTrue) {
 				this.state = true
-				Logger.log('SET ' + this.key + ' to ' + this.state);
+				Logger.log('SET ' + this.key + ' to: ' + this.state);
 			} else if (hasFalse) {
 				this.state = false
-				Logger.log('SET ' + this.key + ' to ' + this.state);
+				Logger.log('SET ' + this.key + ' to: ' + this.state);
 			}
-			Logger.log(this.key + ': ' + this.state);
-			
+			// Logger.log(this.key + ': ' + this.state);
 		}
+		Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 		return this.state
 	}
 }

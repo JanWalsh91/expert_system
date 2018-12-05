@@ -23,10 +23,11 @@ if (fileName) {
 	displayLogs()
 }
 
-function expertSystem(lines) {
+function expertSystem(lines, verbose) {
+	Logger.verbose = verbose
 	Logger.clear()
 	let ret = {}
-	Object.keys(facts).forEach(function(key) { delete facts[key]; });
+	Object.keys(facts).forEach(function(key) { delete facts[key]; })
 	rules.length = 0
 	facts.length = 0
 
@@ -46,19 +47,19 @@ function expertSystem(lines) {
 		Logger.error('Error: ' + e);
 		return createClientObject(ret, true)
 	}
-	
+
 	// create subrules
 	rules.forEach(rule => createSubrules(rule.conditionsTree, rule.conclusionTree))
-	
+
 	// assign keys and create facts from rules' conclusions
 	rules.forEach(rule => createFactFromRule(rule))
-	
+
 	// create keys
 	rules.forEach(rule => {
 		syntaxTree.assignKeysToNodes(rule.conditionsTree)
 		syntaxTree.assignKeysToNodes(rule.conclusionTree)
 	})
-	
+
 	createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols)
 
 	displayFacts()
@@ -548,9 +549,9 @@ function createFactFromRule(rule) {
 function evaluate() {
 	Logger.log('=== EVALUATE ===');
 	for (let key in facts) {
-		Logger.log('OUTER LOOP: evaluating fact ' + key);
+		// Logger.log('OUTER LOOP: evaluating fact ' + key);
 		facts[key].evaluate()
-		Logger.log('OUTER LOOP: evaluating fact ' + key + '  END');
+		// Logger.log('OUTER LOOP: evaluating fact ' + key + '  END');
 	}
 }
 
@@ -565,11 +566,11 @@ function displayFacts() {
 }
 
 function displayQueriedFacts() {
-	Logger.log('=== Queried FACTS ===');
+	Logger.log('=== Queried FACTS ===', false, true);
 	for (let key in facts) {
 		if (facts[key].query) {
-			console.log('ERROR ' + facts[key].error)
-			Logger.log(`${key} : ${facts[key].state}${facts[key].error ? (' (' + facts[key].error) + ')' : ''}`)
+			// console.log('ERROR ' + facts[key].error)
+			Logger.log(`${key}: ${facts[key].state}${facts[key].error ? (' (' + facts[key].error) + ')' : ''}`, false, true)
 		}
 	}
 }
@@ -580,10 +581,7 @@ function displayRules() {
 }
 
 function setRemainingFactsToFalse() {
-	console.log('================================ AAAAAAAAAA8AA')
 	for (let key in facts) {
-		console.log('fact: ' + key)
-		console.log(facts[key])
 		if (!!facts[key].error) {
 			facts[key].state = undefined
 		} else if (facts[key].state == undefined) {

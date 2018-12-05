@@ -15,6 +15,11 @@
 				<input id="file_name_input_fake" name="filename" value="File" type="button">
 				<input id="file_name_input" name="filename" type="file">
 				<input id="send" type="button" name="Expert System" value="Resolve">
+				<label class="checkbox-wrapper verbose" for="verbose">
+					Verbose
+					<input id="verbose" type="checkbox" name="verbose" value="">
+					<span></span>
+				</label>
 			</div>
 			<div id="facts-wrapper">
 				<div id="facts"></div>
@@ -25,6 +30,26 @@
 			<div id="logs"></div>
 		</div>
 		<span id="file_name"></span>
+
+		<div id="tooltip" class="tooltip hide">
+			<label class="checkbox-wrapper">
+				undefined
+				<input disabled id="tooltip0" type="checkbox" data-state="0">
+				<span></span>
+			</label>
+			<label class="checkbox-wrapper">
+				false
+				<input disabled id="tooltip1" type="checkbox" data-state="1">
+				<span></span>
+			</label>
+			<label class="checkbox-wrapper">
+				true
+				<input disabled id="tooltip2" type="checkbox" data-state="2">
+				<span></span>
+			</label>
+			<span class="triangle"></span>
+		</div>
+
 		<script type="text/javascript" src="client.js"></script>
 	</body>
 </html>
