@@ -163,6 +163,8 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 				rules.push(ret)
 			}
 			hasRules = true
+		} else {
+			throw 'Unexpected token: ' + line
 		}
 	})
 

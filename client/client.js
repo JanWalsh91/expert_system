@@ -20,6 +20,14 @@ document.addEventListener("DOMContentLoaded", function() {
 	tooltip2.indeterminate = false;
 	tooltip2.checked = true;
 
+	document.addEventListener('keydown', function (e) {
+		var key = e.keyCode ? e.keyCode : e.which;
+		if (key == 13 && e.shiftKey) {
+  		expertSystem();
+			e.preventDefault();
+   	}
+	});
+
 	var factSet = new Set();
 
 	updateCheckboxes();
