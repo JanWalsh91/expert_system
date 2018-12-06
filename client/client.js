@@ -74,11 +74,21 @@ document.addEventListener("DOMContentLoaded", function() {
 					updateQueries(obj.facts);
 				}
 			} else {
-				console.error('The request failed!');
+				logsDiv.classList.add('error');
+				logsDiv.innerHTML += '<p>The request failed!</p>';
 			}
 		};
 
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 0) {
+				logsDiv.classList.add('error');
+				logsDiv.innerHTML += '<p>Server error</p>';
+			}
+		};
+
+
 		xhr.open('POST', 'http://localhost:8080/');
+		// xhr.open('POST', 'http://10.13.9.10:8080/');
 		xhr.setRequestHeader("Content-Type", "application/json");
 		xhr.send(JSON.stringify({esText, verbose: verbose.checked}));
 	}
@@ -139,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	function updateCheckboxes() {
 		factsDiv.innerHTML = ""
-		queriesDiv.innerHTML = ""
+		// queriesDiv.innerHTML = ""
 		factSet.clear()
 
 		var lines = esTextArea.value.split('\n');

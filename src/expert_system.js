@@ -97,36 +97,42 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 				let key = line.charAt(i)
 				if (key == '!') {
 					if (!line.charAt(i + 1) || !line.charAt(i + 1).match(/^[A-Z]+$/)) {
-						throw 'Invalid initial fact'
+						throw 'Invalid initial fact after: ' + key
 					}
 					falseFactSymbols.push(line.charAt(i + 1))
 					i++
-					continue
-				}
-				if (!key.match(/^[A-Z]+$/)) {
-					throw 'Invalid initial fact'
-				}
-				trueFactSymbols.push(key)
-				if (facts[key] == undefined) {
-					facts[key] = new Fact({key: key, state: true})
+					key = line.charAt(i)
+					if (facts[key] == undefined) {
+						facts[key] = new Fact({key: key, state: false})
+					} else {
+						facts[key].state = false
+					}
 				} else {
-					facts[key].state = true
+					if (!key.match(/^[A-Z]+$/)) {
+						throw 'Invalid initial fact: ' + key
+					}
+					trueFactSymbols.push(key)
+					if (facts[key] == undefined) {
+						facts[key] = new Fact({key: key, state: true})
+					} else {
+						facts[key].state = true
+					}
 				}
 			}
 			if (hasInitialFacts) {
 				throw 'Can only have one set of initial facts'
 			}
-			if (line[1] != undefined)
-				hasInitialFacts = true
+			hasInitialFacts = true
 		} else if (line[0] == '?') {
 			for (let i = 1; i < line.length; i++) {
 				let key = line.charAt(i)
 				if (!key.match(/^[A-Z]+$/)) {
-					throw 'Invalid query'
+					throw 'Invalid query: ' + key
 				}
 				queryFactSymbols.push(key)
 				if (facts[key] == undefined) {
 					facts[key] = new Fact({key: key, query: true})
+
 				} else {
 					facts[key].query = true
 				}
@@ -171,21 +177,33 @@ function parseLines(lines, factSymbols, conclusionFactSymbols, trueFactSymbols, 
 	if (!hasRules) {
 		throw 'Needs at least one rule'
 	}
-	else if (!hasQueries) {
+	if (!hasInitialFacts) {
+		throw 'Must specify initial facts'
+	}
+	if (!hasQueries) {
 		throw 'Needs at least one query'
 	}
 }
 
 function createFalseFacts(factSymbols, conclusionFactSymbols, trueFactSymbols, falseFactSymbols, queryFactSymbols) {
-	falseFactSymbols = falseFactSymbols.concat(factSymbols.filter(el => {
-		return !conclusionFactSymbols.includes(el) && !trueFactSymbols.includes(el) && !queryFactSymbols.includes(el)
-	}))
+	falseFactSymbols = factSymbols.filter(el => {
+		return (
+				!falseFactSymbols.includes(el) &&
+				!conclusionFactSymbols.includes(el) &&
+				!trueFactSymbols.includes(el) &&
+				!queryFactSymbols.includes(el)
+			)
+	})
 	falseFactSymbols.forEach(key => {
 		let query = false
 		if (facts[key] != undefined) {
 			query = facts[key].query
 		}
-		facts[key] = (new Fact({key, state: false, query}))
+		if (facts[key] == undefined) {
+			facts[key] = (new Fact({key, state: false, query}))
+		} else {
+			facts[key].state = false
+		}
 	})
 }
 

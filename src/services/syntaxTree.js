@@ -169,7 +169,7 @@ function createTree(tokens) {
 				break
 			case 'OPERAND':
 				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/))) {
-					throw 'Two operands cannot be in a row'
+					throw 'Cannot have two operands in a row'
 				}
 				if (currentNode.type == null || currentNode.type == 'OPERATOR' || currentNode.type == 'NOT') {
 					let node = new Node(tokens[i])
@@ -178,6 +178,9 @@ function createTree(tokens) {
 				}
 				break
 			case 'OPERATOR':
+				if (i > 0 && tokens[i - 1].type == 'OPERATOR') {
+					throw 'Cannot have two operators in a row'
+				}
 				if (currentNode.type == 'NOT') {
 					while (currentNode.type == 'NOT' && currentNode.parent != null) {
 						currentNode = currentNode.parent

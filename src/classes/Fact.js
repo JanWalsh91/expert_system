@@ -47,17 +47,18 @@ class Fact {
 	evaluate() {
 		Logger.log('Evaluate fact ' + this.key + ' - START');
 		if (this.evaluating) {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 1');
 			return undefined
 		}
 
 		if (this.error == 'contradiction') {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 2');
 			return undefined
 		}
+		// Logger.log(this.rules[0].state);
 
 		if (this.state != undefined && this.rules.every(rule => rule.state != undefined)) {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 3');
 			return this.state
 		}
 
@@ -121,7 +122,7 @@ class Fact {
 				Logger.log('SET ' + this.key + ' to: ' + this.state);
 			}
 		}
-		Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
+		Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 4');
 		return this.state
 	}
 }
