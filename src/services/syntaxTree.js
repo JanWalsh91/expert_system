@@ -246,6 +246,12 @@ function createTree(tokens) {
 				}
 				break;
 			case 'NOT':
+				if (i > 0 && tokens[i - 1].type == 'CLOSE_PARENTHESES') {
+					throw 'Invalid parentheses'
+				}
+				if (i > 0 && tokens[i - 1].type == 'OPERAND') {
+					throw '"!" cannot be preceeded by an operand'
+				}
 				if (i + 1 >= tokens.length) throw '"!" must be followed by something'
 				if (tokens[i + 1].type == 'OPERATOR') throw '"!" cannot be followed by an operator'
 

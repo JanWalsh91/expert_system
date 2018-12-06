@@ -18,7 +18,7 @@ do
 
 		if $fail
 		then
-			printf "$filename: fail\n\tExcpected:\t[$expectedLine]\n\tHas\t\t[$outputLine]\n"
+			printf "$filename: fail\n\tExpected:\t[$expectedLine]\n\tHas\t\t[$outputLine]\n"
 		else
 			printf "$filename: OK\n"
 		fi
