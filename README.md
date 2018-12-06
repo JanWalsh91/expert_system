@@ -16,7 +16,7 @@ Install Node, then run in project root directory:
 
 `npm run server`
 
-Open `localhost:8080`
+Open `localhost:8080` for interactive user interface
 
 ### Dev Server
 
@@ -57,4 +57,43 @@ Open `localhost:8080`
 ### Comments
 
 `A => B #This is a comment`
+
+### Examples
+
+1.
+```
+B + C => A
+D | E => B
+B => C
+=E
+?A
+```
+Output: 
+```
+=== Queried FACTS ===
+A: true
+```
+2.
+```
+A => B | C
+=A
+?B
+```
+Output: 
+```
+=== Queried FACTS ===
+B: ambiguous
+```
+3. 
+```
+A => B
+A => !B
+=A
+?B
+```
+Output: 
+```
+=== Queried FACTS ===
+B: undefined (contradiction)
+```
 
