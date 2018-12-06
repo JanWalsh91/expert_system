@@ -2,6 +2,8 @@
 const Token = require('../classes/Token')
 const Node = require('../classes/Node')
 
+const Logger = require('../classes/Logger.js')
+
 function checkParentheses(exp) {
 	let depth = 0
 
@@ -49,12 +51,10 @@ function isTreeValid(node) {
 
 function removeEmptyNodes(node) {
 	if (node.value == null) {
-		if (node.children.length > 0) {
-			node.children.forEach(child => {
-				node.parent.children.unshift(child)
-				child.parent = node.parent
-			})
-		}
+		node.children.forEach(child => {
+			node.parent.children.unshift(child)
+			child.parent = node.parent
+		})
 		node.parent.children.splice(node.parent.children.indexOf(node), 1)
 	}
 	for (let i = 0; i < node.children.length; i++) {
@@ -155,7 +155,7 @@ function createTree(tokens) {
 				currentNode = emptyNode
 				break
 			case 'CLOSE_PARENTHESES':
-				if (i > 0 && tokens[i - 1].type == 'OPERATOR') {
+				if (i > 0 && (tokens[i - 1].type == 'OPERATOR' || tokens[i - 1].type == 'OPEN_PARENTHESES')) {
 					throw 'Invalid parentheses'
 				}
 				while (currentNode.type != 'OPEN_PARENTHESES' && currentNode.parent != null) {
@@ -326,6 +326,7 @@ const syntaxTree = {
 		let tokens = tokenize(string)
 		let tree = createTree(tokens)
 		orderNode(tree)
+		
 		return tree
 	},
 
