@@ -143,6 +143,9 @@ function createTree(tokens) {
 	for (let i = 0; i < tokens.length; i++) {
 		switch (tokens[i].type) {
 			case 'OPEN_PARENTHESES':
+				if (i > 0 && tokens[i - 1].type == 'OPERAND') {
+					throw 'Invalid parentheses'
+				}
 				let node = new Node(tokens[i])
 				currentNode.children.push(node)
 				node.parent = currentNode
