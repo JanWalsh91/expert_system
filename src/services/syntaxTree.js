@@ -174,6 +174,9 @@ function createTree(tokens) {
 				if (i > 0 && (tokens[i - 1].value.match(/^[A-Z]+$/))) {
 					throw 'Cannot have two operands in a row'
 				}
+				if (i > 0 && tokens[i - 1].type == 'CLOSE_PARENTHESES') {
+					throw 'Invalid parentheses'
+				}
 				if (currentNode.type == null || currentNode.type == 'OPERATOR' || currentNode.type == 'NOT') {
 					let node = new Node(tokens[i])
 					currentNode.children.push(node)
