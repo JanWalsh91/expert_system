@@ -152,6 +152,9 @@ function createTree(tokens) {
 				currentNode = emptyNode
 				break
 			case 'CLOSE_PARENTHESES':
+				if (i > 0 && tokens[i - 1].type == 'OPERATOR') {
+					throw 'Invalid parentheses'
+				}
 				while (currentNode.type != 'OPEN_PARENTHESES' && currentNode.parent != null) {
 					currentNode = currentNode.parent
 				}
