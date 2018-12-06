@@ -32,6 +32,7 @@ body > * {
 	font-family: 'Chakra Petch', sans-serif;
 	border: solid 1px lightgrey;
 	resize: none;
+	font-size: 125%;
 }
 
 #buttonWrapper {

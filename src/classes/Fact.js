@@ -46,27 +46,46 @@ class Fact {
 
 	evaluate() {
 		Logger.log('Evaluate fact ' + this.key + ' - START');
+		// if fact is currently being evaluated, return to avoid infinite loop
 		if (this.evaluating) {
 			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 1');
 			return undefined
 		}
-
+		// if a fact has a contradiction, treat is as undefined
 		if (this.error == 'contradiction') {
 			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 2');
 			return undefined
 		}
-		// Logger.log(this.rules[0].state);
-
+		// if state has value and all rules are solved, return value
 		if (this.state != undefined && this.rules.every(rule => rule.state != undefined)) {
 			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 3');
 			return this.state
 		}
-
+		// calculate result of all rules of fact
 		let results = this.rules.map(rule => {
 			this.evaluating = true
 			let ret = rule.evaluate()
 			this.evaluating = false
+			// set facts of child nodes to ambiguous in some cases (T => A|B or T => A^B)
 			if (ret == true && (rule.conclusionTree.key[0] == '|' || rule.conclusionTree.key[0] == '^')) {
+				if (rule.conclusionTree.value == '^') {
+					let children = rule.conclusionTree.children
+					if (children.every(child => {
+						return children.every(child2 => {
+							return child.key === child2.key
+						})
+					})) {
+						if (children.length % 2 == 0) {
+							if (Fact.keyExists(children[0].key)) {
+								facts[Fact.getRootKey(children[0].key)].error = 'contradition'
+								facts[Fact.getRootKey(children[0].key)].state = undefined
+							}
+						} else {
+							facts[children[0].key].state = true
+						}
+					}
+				}
+
 				rule.conclusionTree.children.forEach(child => {
 					if (facts[Fact.getRootKey(child.key)].state == undefined) {
 						facts[Fact.getRootKey(child.key)].state = 'ambiguous'
@@ -75,7 +94,7 @@ class Fact {
 			}
 			return ret
 		})
-
+		// change results. F => undefined, undefined => undefined, fact is false: T => F, F => T
 		results = results.map((result, i) => {
 			if (result != true) return undefined
 			else {
@@ -88,7 +107,7 @@ class Fact {
 				return switchValue ? !result : result
 			}
 		})
-
+		// evaluate results of rules. Compare to current state. Update state.
 		this.error = false
 		if (results.length == 0) {
 			this.state == false

@@ -310,6 +310,19 @@ function createSubrules(conditionsTree, conclusionTree) {
 					rules.push(rule)
 					createSubrules(rule.conditionsTree, rule.conclusionTree)
 				})
+
+				// handle A|A in conclusion
+				let children = conclusionTree.children
+				children.forEach(child => child.key = syntaxTree.createKeyFromNode(child))
+				if (children.every(child => child.key == children[0].key)) {
+					let rule = new Rule({
+						conditionsTree: syntaxTree.duplicateNode(conditionsTree),
+						conclusionTree: syntaxTree.duplicateNode(children[0])
+					})
+					simplifyTrees(rule)
+					rules.push(rule)
+					createSubrules(rule.conditionsTree, rule.conclusionTree)
+				}
 			}
 			function handleXor() {
 				conclusionTree.children.forEach(child => {

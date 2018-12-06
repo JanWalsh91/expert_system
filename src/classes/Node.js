@@ -24,8 +24,13 @@ class Node {
 
 	evaluate() {
 		Logger.log('Evaluate node ' + this.key + ' - START');
+		// if the fact exists and it is not undefined, return it. Else
 		if (Fact.keyExists(this.key)) {
-			return Fact.evaluate(this.key)
+			let ret = Fact.evaluate(this.key)
+			// console.log(ret);
+			if (ret != undefined) {
+				return ret
+			}
 		}
 
 		const logAndReturn = ret => {
