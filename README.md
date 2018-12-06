@@ -2,6 +2,8 @@
 
 ## Installation
 
+Install Node, then run in project root directory:
+
 `npm install`
 
 ## Usage
