@@ -88,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 		xhr.open('POST', 'http://localhost:8080/');
-		// xhr.open('POST', 'http://10.13.9.10:8080/');
 		xhr.setRequestHeader("Content-Type", "application/json");
 		xhr.send(JSON.stringify({esText, verbose: verbose.checked}));
 	}

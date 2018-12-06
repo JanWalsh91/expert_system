@@ -48,17 +48,17 @@ class Fact {
 		Logger.log('Evaluate fact ' + this.key + ' - START');
 		// if fact is currently being evaluated, return to avoid infinite loop
 		if (this.evaluating) {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 1');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 			return undefined
 		}
 		// if a fact has a contradiction, treat is as undefined
 		if (this.error == 'contradiction') {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 2');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 			return undefined
 		}
 		// if state has value and all rules are solved, return value
 		if (this.state != undefined && this.rules.every(rule => rule.state != undefined)) {
-			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 3');
+			Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 			return this.state
 		}
 		// calculate result of all rules of fact
@@ -141,7 +141,7 @@ class Fact {
 				Logger.log('SET ' + this.key + ' to: ' + this.state);
 			}
 		}
-		Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END 4');
+		Logger.log('Evaluate fact ' + this.key + ': ' + this.state + ' - END');
 		return this.state
 	}
 }
